@@ -1,0 +1,20 @@
+.{
+    .name = .sbl,
+    .version = "0.0.1",
+    .fingerprint = 0xba392b4d538bef37,
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .sdl3 = .{
+            .url = "git+https://codeberg.org/7Games/zig-sdl3?ref=master#69cf1fba30b39fe0a140fc2139d403692e650d16",
+            .hash = "sdl3-0.2.2-NmT1Q0ZUKgCxQv6PXwCIbr_MKILJYAgDWv1YhClnS4XH",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "sable",
+        "gui",
+        //"LICENSE",
+        //"README.md",
+    },
+}
