@@ -4,17 +4,19 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const sdl3 = b.dependency("sdl3", .{
-        .target = target,
-        .optimize = optimize,
-    });
+    const sdl3 = b.dependency("sdl3", .{ .target = target, .optimize = optimize });
+    const known_folders = b.dependency("known_folders", .{ .target = target, .optimize = optimize });
+
+    const imports = [_]std.Build.Module.Import{
+        .{ .name = "sdl3", .module = sdl3.module("sdl3") },
+        .{ .name = "known_folders", .module = known_folders.module("known-folders") },
+    };
 
     const sable_module = b.addModule("sbl", .{
         .root_source_file = b.path("sable/main.zig"),
         .target = target,
-        .imports = &.{
-            .{ .name = "sdl3", .module = sdl3.module("sdl3") },
-        },
+        .optimize = optimize,
+        .imports = &imports,
     });
     const sable_exe = b.addExecutable(.{
         .name = "sable",
@@ -24,14 +26,21 @@ pub fn build(b: *std.Build) void {
     const gui_module = b.addModule("gui", .{
         .root_source_file = b.path("gui/main.zig"),
         .target = target,
-        .imports = &.{
-            .{ .name = "sdl3", .module = sdl3.module("sdl3") },
-            .{ .name = "sable", .module = sable_module },
-        },
+        .optimize = optimize,
+        .imports = &imports,
     });
+
+    gui_module.addImport("sbl", sable_module);
+
     const gui_exe = b.addExecutable(.{
         .name = "gsable",
         .root_module = gui_module,
+    });
+
+    b.installDirectory(.{
+        .source_dir = b.path("assets"),
+        .install_dir = .prefix,
+        .install_subdir = "share/sbl",
     });
 
     b.installArtifact(sable_exe);

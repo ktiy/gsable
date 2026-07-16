@@ -8,6 +8,10 @@
             .url = "git+https://codeberg.org/7Games/zig-sdl3?ref=master#69cf1fba30b39fe0a140fc2139d403692e650d16",
             .hash = "sdl3-0.2.2-NmT1Q0ZUKgCxQv6PXwCIbr_MKILJYAgDWv1YhClnS4XH",
         },
+        .known_folders = .{
+            .url = "git+https://github.com/ziglibs/known-folders.git#207c34a16e4365edc20d92c7892f962b3bed46e8",
+            .hash = "known_folders-0.0.0-Fy-PJsbKAACbDh9bBxR0MMThxZSS6A9RH4apWphNHY70",
+        },
     },
     .paths = .{
         "build.zig",
