@@ -10,5 +10,10 @@ Interpreter and graphical environment for the **sable** programming language.
 $ zig build install --prefix ~/.local
 ```
 
+# Documentation
+
+- Source files must be UTF-8 encoded, and cannot be greater than 4.2GB in size
+- The interpreter cannot open more than 256 files at once
+
 [1]: https://ziglang.org
 [2]: https://wiki.libsdl.org/SDL3/FrontPage

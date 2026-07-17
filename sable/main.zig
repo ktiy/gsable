@@ -1,6 +1,9 @@
 const std = @import("std");
 const build_options = @import("build_options");
 
+const SourceFile = @import("SourceFile.zig");
+const max_open_files = 256;
+
 const usage: []const u8 =
     \\usage: sable [options] [input-file...]
     \\
@@ -24,19 +27,21 @@ pub fn main(init: std.process.Init) !void {
     const args = try init.minimal.args.toSlice(init.arena.allocator());
 
     var repl: bool = false;
-    var files_buf: [256][]const u8 = undefined;
-    var files: std.ArrayList([]const u8) = .initBuffer(&files_buf);
+    var files_buf: [max_open_files]SourceFile = undefined;
+    var files: std.ArrayList(SourceFile) = .initBuffer(&files_buf);
 
     for (args[1..]) |arg| {
         if (!std.mem.startsWith(u8, arg, "-")) {
-            try files.appendBounded(arg);
+            try files.appendBounded(.{ .path = arg });
         }
         else if (std.mem.eql(u8, arg, "-h") or std.mem.eql(u8, arg, "--help")) {
             try stdout.print("{s}", .{usage});
+            try stdout.flush();
             std.process.exit(0);
         }
         else if (std.mem.eql(u8, arg, "-v") or std.mem.eql(u8, arg, "--version")) {
-            std.debug.print("sable v{s}\n", .{build_options.version});
+            try stderr.print("sable v{s}\n", .{build_options.version});
+            try stderr.flush();
             std.process.exit(0);
         }
         else if (std.mem.eql(u8, arg, "-r") or std.mem.eql(u8, arg, "--repl")) {
@@ -45,11 +50,24 @@ pub fn main(init: std.process.Init) !void {
         else {
             try stderr.print("sable: {s}: invalid option\n", .{arg});
             try stderr.print("{s}", .{usage});
+            try stderr.flush();
             std.process.exit(1);
         }
     }
 
-    for (files.items) |file| {
-        std.debug.print("{s}\n", .{file});
+    if (files.items.len == 0 and !repl) {
+        try stderr.print("sable: no input files provided\n", .{});
+        try stderr.print("{s}", .{usage});
+        try stderr.flush();
+        std.process.exit(1);
     }
+
+    for (files.items) |*src| {
+        try src.read(io, init.gpa);
+        std.debug.print("{s}:\n{s}", .{src.path, src.content});
+    }
+    defer for (files.items) |src| {
+        init.gpa.free(src.content);
+    };
+
 }
