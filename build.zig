@@ -4,7 +4,11 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const sdl3 = b.dependency("sdl3", .{ .target = target, .optimize = optimize });
+    const sdl3 = b.dependency("sdl3", .{
+        .target = target,
+        .optimize = optimize,
+        .ext_image = true,
+    });
     const known_folders = b.dependency("known_folders", .{ .target = target, .optimize = optimize });
 
     const imports = [_]std.Build.Module.Import{

@@ -52,6 +52,8 @@ pub fn init(
         .fps_cap = .{ .mode = .{ .limited = fps } },
         .quit = false,
     };
+
+    try self.set_app_icon();
 }
 
 pub fn deinit(self: *App) void {
@@ -77,7 +79,17 @@ pub fn frame_end(self: *App) !void {
 }
 
 fn set_app_icon(self: *App) !void {
-    undefined;
+    const data_dir = try folders.open(self.io, self.tmp.allocator(), &self.env, .data, .{}) orelse {
+        return std.Io.File.OpenError.FileNotFound;
+    };
+    const sbl_data_dir = try data_dir.openDir(self.io, "sbl", .{});
+    const icon_file = try sbl_data_dir.readFileAlloc(self.io, "icon.png", self.gpa, .unlimited);
+    defer self.gpa.free(icon_file);
+
+    const icon = try sdl.image.loadPngIo(try .initFromConstMem(icon_file));
+    defer icon.deinit();
+
+    try self.window.setIcon(icon);
 }
 
 const folders = @import("known_folders");
