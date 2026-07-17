@@ -29,7 +29,7 @@ pub fn build(b: *std.Build) void {
     sable_module.addOptions("build_options", options);
 
     const sable_exe = b.addExecutable(.{
-        .name = "sable",
+        .name = "sbl",
         .root_module = sable_module,
     });
 
@@ -56,8 +56,8 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(sable_exe);
     b.installArtifact(gui_exe);
 
-    const sable_run_step = b.step("sable", "Run the sable binary");
-    const gui_run_step = b.step("gui", "Run the gsable binary");
+    const sable_run_step = b.step("sbl", "Run the sable binary");
+    const gui_run_step = b.step("gsable", "Run the gsable binary");
 
     const sable_run_cmd = b.addRunArtifact(sable_exe);
     const gui_run_cmd = b.addRunArtifact(gui_exe);
