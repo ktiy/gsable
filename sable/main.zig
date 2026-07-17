@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const build_options = @import("build_options");
 
 const SourceFile = @import("SourceFile.zig");
@@ -13,18 +14,26 @@ const usage: []const u8 =
     \\
 ;
 
-pub fn main(init: std.process.Init) !void {
-    const io = init.io;
+const io = std.Io.Threaded.global_single_threaded.io();
 
-    var stdout_buf: [128]u8 = undefined;
-    var stdout_writer = std.Io.File.stdout().writer(io, &stdout_buf);
-    const stdout = &stdout_writer.interface;
+var stdout_buf: [128]u8 = undefined;
+var stdout_writer = std.Io.File.stdout().writer(io, &stdout_buf);
+const stdout = &stdout_writer.interface;
 
-    var stderr_buf: [128]u8 = undefined;
-    var stderr_writer = std.Io.File.stderr().writer(io, &stderr_buf);
-    const stderr = &stderr_writer.interface;
+var stderr_buf: [128]u8 = undefined;
+var stderr_writer = std.Io.File.stderr().writer(io, &stderr_buf);
+const stderr = &stderr_writer.interface;
 
-    const args = try init.minimal.args.toSlice(init.arena.allocator());
+pub fn main(init: std.process.Init.Minimal) !void {
+    var arena_state = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena_state.deinit();
+    const arena = arena_state.allocator();
+
+    var gpa_state = std.heap.DebugAllocator(.{}){};
+    defer _ = gpa_state.deinit();
+    const gpa = gpa_state.allocator();
+
+    const args = try init.args.toSlice(arena);
 
     var repl: bool = false;
     var files_buf: [max_open_files]SourceFile = undefined;
@@ -63,11 +72,10 @@ pub fn main(init: std.process.Init) !void {
     }
 
     for (files.items) |*src| {
-        try src.read(io, init.gpa);
-        std.debug.print("{s}:\n{s}", .{src.path, src.content});
+        try src.read(io, gpa);
+        std.log.debug("{s}:\n{s}", .{src.path, src.content});
     }
     defer for (files.items) |src| {
-        init.gpa.free(src.content);
+        gpa.free(src.content);
     };
-
 }
