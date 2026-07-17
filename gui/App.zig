@@ -4,64 +4,82 @@ const fps = 60;
 const screen_width = 640;
 const screen_height = 480;
 
-const std = @import("std");
-const sdl = @import("sdl3");
-const folders = @import("known_folders");
-
-quit: bool,
-debug_allocator: std.heap.DebugAllocator(.{}),
-arena: std.heap.ArenaAllocator,
-gpa: std.mem.Allocator,
-tmp: std.mem.Allocator,
 io: std.Io,
+gpa: std.mem.Allocator,
+arena: std.heap.ArenaAllocator,
+tmp: std.heap.ArenaAllocator,
+env: std.process.Environ.Map,
+
 init_flags: sdl.InitFlags,
 window: sdl.video.Window,
 renderer: sdl.render.Renderer,
 fps_cap: sdl.extras.FramerateCapper(f32),
 
-pub fn init(g: *App, io: std.Io) !void {
-    g.io = io;
-    g.debug_allocator = .{};
-    g.arena = .init(std.heap.page_allocator);
-    g.gpa = g.debug_allocator.allocator();
-    g.tmp = g.arena.allocator();
+quit: bool,
+
+pub fn init(
+    self: *App,
+    process: std.process.Init.Minimal,
+    io: std.Io,
+    gpa: std.mem.Allocator,
+    arena: std.heap.ArenaAllocator,
+    tmp: std.heap.ArenaAllocator,
+) !void {
+    self.arena = arena;
+    const env = try process.environ.createMap(self.arena.allocator());
 
     try sdl.setAppMetadata("sable", "0.0.1", "org.piapiac.kitty.sable");
 
-    g.init_flags = .{ .video = true };
-    try sdl.init(g.init_flags);
+    const flags: sdl.InitFlags = .{ .video = true };
+    try sdl.init(flags);
 
-    g.window, g.renderer = try sdl.render.Renderer.initWithWindow(
+    const window, const renderer = try sdl.render.Renderer.initWithWindow(
         "sable",
         screen_width,
         screen_height,
         .{ .resizable = true },
     );
 
-    g.fps_cap = .{ .mode = .{ .limited = fps } };
-    g.quit = false;
+    self.* = .{
+        .io = io,
+        .gpa = gpa,
+        .arena = arena,
+        .tmp = tmp,
+        .env = env,
+        .init_flags = flags,
+        .window = window,
+        .renderer = renderer,
+        .fps_cap = .{ .mode = .{ .limited = fps } },
+        .quit = false,
+    };
 }
 
-pub fn deinit(g: *App) void {
-    g.window.deinit();
-    g.renderer.deinit();
+pub fn deinit(self: *App) void {
+    self.window.deinit();
+    self.renderer.deinit();
     sdl.shutdown();
-    g.arena.deinit();
-    _ = g.debug_allocator.deinit();
 }
 
-pub fn frame(g: *App) !bool {
-    if (g.quit) return false;
+pub fn frame(self: *App) !bool {
+    if (self.quit) return false;
 
-    const dt = g.fps_cap.delay();
+    const dt = self.fps_cap.delay();
     _ = dt;
 
-    try g.renderer.setDrawColor(.{.r=255, .g=255, .b=255, .a=255});
-    try g.renderer.renderFillRect(null);
+    try self.renderer.setDrawColor(.{.r=255, .g=255, .b=255, .a=255});
+    try self.renderer.renderFillRect(null);
 
     return true;
 }
 
-pub fn frame_end(g: *App) !void {
-    try g.renderer.present();
+pub fn frame_end(self: *App) !void {
+    try self.renderer.present();
 }
+
+fn set_app_icon(self: *App) !void {
+    undefined;
+}
+
+const folders = @import("known_folders");
+const sdl = @import("sdl3");
+const std = @import("std");
