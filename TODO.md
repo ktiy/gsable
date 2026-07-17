@@ -2,8 +2,8 @@
 
 ## Interpreter
 
-- [ ] Lexer error handling
 - [ ] Basic parser
+- [ ] Basic source error reporting
 
 # BACKLOG
 
@@ -12,4 +12,5 @@
 
 # DONE
 
+- [x] Lexer error handling
 - [x] Basic lexer

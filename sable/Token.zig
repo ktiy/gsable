@@ -59,20 +59,25 @@ const log = std.log.scoped(.lexer);
 // TODO: proper error handling (other than Lexer.panic)
 // TODO: symbols should allow more than just the latin alphabet
 pub const Lexer = struct {
-    path: []const u8,
     buf: [:0]const u8,
     pos: u32,
     cache: ?struct { u21, u3 } = null,
 
-    pub fn init(src: SourceFile, pos: u32) Lexer {
+    pub fn init(content: [:0]const u8, pos: u32) Lexer {
         return .{
-            .path = src.path,
-            .buf = src.content,
+            .buf = content,
             .pos = pos,
         };
     }
 
-    pub fn next(lex: *Lexer) Token {
+    pub const Error = error{
+        invalid_utf8,
+        unclosed_string,
+        unclosed_comment,
+        unexpected_character,
+    };
+
+    pub fn next(lex: *Lexer) Error!Token {
         var t = Token{
             .kind = .unknown,
             .pos = .span(lex.pos, lex.pos),
@@ -95,7 +100,7 @@ pub const Lexer = struct {
         var comment_depth: usize = 0;
 
         state: switch (State.start) {
-            .start => switch (lex.peek()) {
+            .start => switch (try lex.peek()) {
                 0 => {
                     t.kind = .eof;
                     return t;
@@ -145,11 +150,11 @@ pub const Lexer = struct {
                 '‿' => t.kind = lex.atom(.strand),
                 else => |cp| {
                     const prim = primitives.token_from_cp(cp);
-                    if (prim == .unknown) lex.panic("unexpected character");
+                    if (prim == .unknown) return Error.unexpected_character;
                     t.kind = lex.atom(prim);
                 },
             },
-            .comment_line => switch (lex.peek()) {
+            .comment_line => switch (try lex.peek()) {
                 0 => {
                     t.kind = .eof;
                     return t;
@@ -162,9 +167,9 @@ pub const Lexer = struct {
                     continue :state .comment_line;
                 },
             },
-            .comment_paren => switch (lex.peek()) {
+            .comment_paren => switch (try lex.peek()) {
                 0 => {
-                    lex.panic("unexpected EOF");
+                    return Error.unclosed_comment;
                 },
                 '(' => {
                     lex.incr();
@@ -183,14 +188,14 @@ pub const Lexer = struct {
                     continue :state .comment_paren;
                 },
             },
-            .symbol => switch (lex.peek()) {
+            .symbol => switch (try lex.peek()) {
                 'a'...'z', 'A'...'Z', '0'...'9', '_' => {
                     lex.incr();
                     continue :state .symbol;
                 },
                 else => {},
             },
-            .number_dec => switch (lex.peek()) {
+            .number_dec => switch (try lex.peek()) {
                 '0'...'9', '_' => {
                     lex.incr();
                     continue :state .number_dec;
@@ -205,7 +210,7 @@ pub const Lexer = struct {
                 },
                 else => {},
             },
-            .number_frac => switch (lex.peek()) {
+            .number_frac => switch (try lex.peek()) {
                 '0'...'9', '_' => {
                     lex.incr();
                     continue :state .number_frac;
@@ -216,7 +221,7 @@ pub const Lexer = struct {
                 },
                 else => {},
             },
-            .number_exp_start => switch (lex.peek()) {
+            .number_exp_start => switch (try lex.peek()) {
                 '+', '-' => {
                     lex.incr();
                     continue :state .number_exp;
@@ -227,21 +232,21 @@ pub const Lexer = struct {
                 },
                 else => {},
             },
-            .number_exp => switch (lex.peek()) {
+            .number_exp => switch (try lex.peek()) {
                 '0'...'9', '_' => {
                     lex.incr();
                     continue :state .number_exp;
                 },
                 else => {},
             },
-            .number_hex => switch (lex.peek()) {
+            .number_hex => switch (try lex.peek()) {
                 '0'...'9', 'a'...'f', 'A'...'F', '_' => {
                     lex.incr();
                     continue :state .number_hex;
                 },
                 else => {},
             },
-            .string_start => switch (lex.peek()) {
+            .string_start => switch (try lex.peek()) {
                 '"' => {
                     lex.incr();
                 },
@@ -249,14 +254,14 @@ pub const Lexer = struct {
                     lex.incr();
                     continue :state .string_backslash;
                 },
-                '\n', 0 => lex.panic("expected `\"`"),
+                '\n', 0 => return Error.unclosed_string,
                 else => {
                     lex.incr();
                     continue :state .string_start;
                 },
             },
-            .string_backslash => switch (lex.peek()) {
-                '\n', 0 => lex.panic("expected  `\"'"),
+            .string_backslash => switch (try lex.peek()) {
+                '\n', 0 => return Error.unclosed_string,
                 else => {
                     lex.incr();
                     continue :state .string_start;
@@ -273,7 +278,7 @@ pub const Lexer = struct {
         defer list.deinit(gpa);
 
         while (true) {
-            const t = lex.next();
+            const t = try lex.next();
             if (t.kind == .eof) break;
             try list.append(gpa, t);
         }
@@ -281,13 +286,13 @@ pub const Lexer = struct {
         return list.toOwnedSlice();
     }
 
-    fn peek(lex: *Lexer) u21 {
+    fn peek(lex: *Lexer) !u21 {
         if (lex.pos >= lex.buf.len) return 0;
         if (lex.cache) |cache| return cache[0];
 
-        const e = "invalid utf-8";
-        const len = std.unicode.utf8ByteSequenceLength(lex.buf[lex.pos]) catch lex.panic(e);
-        const cp = std.unicode.utf8Decode(lex.buf[lex.pos..][0..len]) catch lex.panic(e);
+        const buf = lex.buf[lex.pos..];
+        const len = utf.utf8ByteSequenceLength(buf[0]) catch return Error.invalid_utf8;
+        const cp = utf.utf8Decode(buf[0..len]) catch return Error.invalid_utf8;
 
         lex.cache = .{ cp, len };
         return cp;
@@ -313,11 +318,11 @@ pub const Lexer = struct {
 test "lexer" {
     const gpa = std.testing.allocator;
 
-    const src = SourceFile{ .path = "example", .content =
+    const src =
         \\1‿2ι3+ %comment
         \\[3](comment(nested))0-
         \\"hello\n"
-    };
+    ;
 
     const expect = [_]Token.Kind{
         .real,
@@ -346,4 +351,37 @@ test "lexer" {
     }
 }
 
+test "lexer invalid character" {
+    const gpa = std.testing.allocator;
+    var lex = Lexer.init("a↢", 0);
+    const result = lex.collect(gpa);
+    try std.testing.expectError(error.unexpected_character, result);
+    try std.testing.expectEqual(1, lex.pos);
+}
+
+test "lexer unclosed comment" {
+    const gpa = std.testing.allocator;
+    var lex = Lexer.init("(", 0);
+    const result = lex.collect(gpa);
+    try std.testing.expectError(error.unclosed_comment, result);
+    try std.testing.expectEqual(1, lex.pos);
+}
+
+test "lexer unclosed string" {
+    const gpa = std.testing.allocator;
+    var lex = Lexer.init("\"", 0);
+    const result = lex.collect(gpa);
+    try std.testing.expectError(error.unclosed_string, result);
+    try std.testing.expectEqual(1, lex.pos);
+}
+
+test "invalid utf-8" {
+    const gpa = std.testing.allocator;
+    var lex = Lexer.init("⋅\xc3\x28", 0);
+    const result = lex.collect(gpa);
+    try std.testing.expectError(error.invalid_utf8, result);
+    try std.testing.expectEqual(3, lex.pos);
+}
+
+const utf = std.unicode;
 const std = @import("std");
