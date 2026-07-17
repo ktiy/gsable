@@ -8,8 +8,6 @@ pub const max_size = std.math.maxInt(u32);
 var src_buffer: [4096]u8 = undefined;
 
 pub fn read(src: *Self, io: std.Io, arena: std.mem.Allocator) !void {
-    std.log.debug("reading {s}", .{src.path});
-
     const cwd = std.Io.Dir.cwd();
     const file = try cwd.openFile(io, src.path, .{});
     var reader = file.reader(io, &src_buffer);
@@ -37,7 +35,7 @@ pub const Span = struct {
     }
 
     pub fn line_col(self: Span, buf: []const u8) Position {
-        return Position.cursor(buf, self.start, self.end);
+        return Position.cursors(buf, self.start, self.end);
     }
 };
 
@@ -47,8 +45,12 @@ pub const Position = struct {
     line_1: u32 = 1,
     column_1: u32 = 1,
 
-    pub fn cursor(buf: []const u8, idx_0: u32, idx_1: u32) Position {
-        std.debug.assert(idx_0 < idx_1);
+    pub fn cursor(buf: []const u8, idx: u32) Position {
+        return cursors(buf, idx, idx);
+    }
+
+    pub fn cursors(buf: []const u8, idx_0: u32, idx_1: u32) Position {
+        std.debug.assert(idx_0 <= idx_1);
         std.debug.assert(idx_1 <= buf.len);
 
         var pos = Position{};

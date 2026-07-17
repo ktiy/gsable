@@ -75,23 +75,17 @@ pub fn main(init: std.process.Init.Minimal) !void {
     }
 
     for (files.items) |*src| {
+        std.log.debug("reading {s}", .{src.path});
         try src.read(io, gpa);
 
-        std.log.info("{s}:", .{src.path});
-
+        std.log.debug("lexing {s}", .{src.path});
         var lex = Token.Lexer.init(src.content, 0);
-        var tokens = try lex.collect(gpa);
+        var tokens = lex.collect(gpa) catch |e| {
+            const loc = SourceFile.Position.cursor(src.content, lex.pos);
+            std.log.err("{s}: {d}:{d}: {s}", .{ src.path, loc.line, loc.column, @errorName(e) });
+            std.process.exit(1);
+        };
         defer tokens.deinit(gpa);
-        for (tokens.items(.kind), tokens.items(.pos)) |kind, pos| {
-            const loc = pos.line_col(src.content);
-            std.log.info("{s} ({d}:{d}) [{d}..{d}]", .{
-                @tagName(kind),
-                loc.line,
-                loc.column,
-                pos.start,
-                pos.end,
-            });
-        }
     }
     defer for (files.items) |src| {
         gpa.free(src.content);
