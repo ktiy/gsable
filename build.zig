@@ -1,8 +1,12 @@
 const std = @import("std");
+const manifest = @import("build.zig.zon");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+
+    const options = b.addOptions();
+    options.addOption([]const u8, "version", manifest.version);
 
     const sdl3 = b.dependency("sdl3", .{
         .target = target,
@@ -22,6 +26,8 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
         .imports = &imports,
     });
+    sable_module.addOptions("build_options", options);
+
     const sable_exe = b.addExecutable(.{
         .name = "sable",
         .root_module = sable_module,
