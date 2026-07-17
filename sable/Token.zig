@@ -10,8 +10,7 @@ pub const List = std.MultiArrayList(Token);
 pub const Slice = List.Slice;
 pub const Index = u32;
 
-pub const Kind = enum {
-    comment,
+pub const Kind = enum(u8) {
     builtin,
     symbol,
     byte,
@@ -50,6 +49,10 @@ pub const Kind = enum {
     pow,
     mod,
 
+    comment,
+    comment_line,
+    newline,
+
     eof,
     unknown,
 };
@@ -85,6 +88,8 @@ pub const Lexer = struct {
 
         const State = enum {
             start,
+            start_backslash,
+            newline,
             comment_line,
             comment_paren,
             symbol,
@@ -105,14 +110,23 @@ pub const Lexer = struct {
                     t.kind = .eof;
                     return t;
                 },
-                ' ', '\r', '\n' => {
+                '\\' => {
+                    lex.incr();
+                    continue :state .start_backslash;
+                },
+                ' ', '\t', '\r' => {
                     lex.incr();
                     t.pos.start = lex.pos;
                     continue :state .start;
                 },
+                '\n' => {
+                    lex.incr();
+                    t.kind = .newline;
+                    continue :state .newline;
+                },
                 '%' => {
                     lex.incr();
-                    t.kind = .comment;
+                    t.kind = .comment_line;
                     continue :state .comment_line;
                 },
                 '(' => {
@@ -153,6 +167,20 @@ pub const Lexer = struct {
                     if (prim == .unknown) return Error.unexpected_character;
                     t.kind = lex.atom(prim);
                 },
+            },
+            .start_backslash => switch (try lex.peek()) {
+                '\n' => {
+                    lex.incr();
+                    continue :state .start;
+                },
+                else => return Error.unexpected_character,
+            },
+            .newline => switch (try lex.peek()) {
+                ' ', '\t', '\r', '\n' => {
+                    lex.incr();
+                    continue :state .newline;
+                },
+                else => {},
             },
             .comment_line => switch (try lex.peek()) {
                 0 => {
@@ -331,13 +359,14 @@ test "lexer" {
         .iota,
         .real,
         .add,
-        .comment,
+        .comment_line,
         .array_open,
         .real,
         .array_close,
         .comment,
         .real,
         .sub,
+        .newline,
         .string,
     };
 
