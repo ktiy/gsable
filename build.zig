@@ -3,7 +3,9 @@ const manifest = @import("build.zig.zon");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{});
+    const optimize = b.standardOptimizeOption(.{
+        .preferred_optimize_mode = .ReleaseFast,
+    });
 
     const options = b.addOptions();
     options.addOption([]const u8, "version", manifest.version);
@@ -20,65 +22,11 @@ pub fn build(b: *std.Build) void {
         .{ .name = "known_folders", .module = known_folders.module("known-folders") },
     };
 
-    const sable_module = b.addModule("sbl", .{
-        .root_source_file = b.path("sable/main.zig"),
-        .target = target,
-        .optimize = optimize,
-        .imports = &imports,
-    });
-    sable_module.addOptions("build_options", options);
+    const sable = build_exe(b, "sbl", "sable/main.zig", target, optimize, options, &imports);
+    const gui = build_exe(b, "gsable", "gui/main.zig", target, optimize, options, &imports);
 
-    const sable_exe = b.addExecutable(.{
-        .name = "sbl",
-        .root_module = sable_module,
-    });
-
-    const gui_module = b.addModule("gui", .{
-        .root_source_file = b.path("gui/main.zig"),
-        .target = target,
-        .optimize = optimize,
-        .imports = &imports,
-    });
-
-    gui_module.addImport("sbl", sable_module);
-
-    const gui_exe = b.addExecutable(.{
-        .name = "gsable",
-        .root_module = gui_module,
-    });
-
-    b.installDirectory(.{
-        .source_dir = b.path("assets"),
-        .install_dir = .prefix,
-        .install_subdir = "share/sbl",
-    });
-
-    b.installArtifact(sable_exe);
-    b.installArtifact(gui_exe);
-
-    const sable_run_step = b.step("sbl", "Run the sable binary");
-    const gui_run_step = b.step("gsable", "Run the gsable binary");
-
-    const sable_run_cmd = b.addRunArtifact(sable_exe);
-    const gui_run_cmd = b.addRunArtifact(gui_exe);
-
-    sable_run_step.dependOn(&sable_run_cmd.step);
-    gui_run_step.dependOn(&gui_run_cmd.step);
-
-    sable_run_cmd.step.dependOn(b.getInstallStep());
-    gui_run_cmd.step.dependOn(b.getInstallStep());
-
-    if (b.args) |args| {
-        sable_run_cmd.addArgs(args);
-        gui_run_cmd.addArgs(args);
-    }
-
-    const sable_mod_tests = b.addTest(.{
-        .root_module = sable_module,
-    });
-    const gui_mod_tests = b.addTest(.{
-        .root_module = gui_module,
-    });
+    const sable_mod_tests = b.addTest(.{ .root_module = sable });
+    const gui_mod_tests = b.addTest(.{ .root_module = gui });
 
     const run_sable_mod_tests = b.addRunArtifact(sable_mod_tests);
     const run_gui_mod_tests = b.addRunArtifact(gui_mod_tests);
@@ -86,4 +34,45 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&run_sable_mod_tests.step);
     test_step.dependOn(&run_gui_mod_tests.step);
+}
+
+fn build_exe(
+    b: *std.Build,
+    comptime name: []const u8,
+    src: []const u8,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    options: *std.Build.Step.Options,
+    imports: []const std.Build.Module.Import,
+) *std.Build.Module {
+    const module = b.addModule(name, .{
+        .root_source_file = b.path(src),
+        .target = target,
+        .optimize = optimize,
+        .imports = imports,
+    });
+
+    module.addImport(name, module);
+    module.addOptions("build_options", options);
+
+    const exe = b.addExecutable(.{
+        .name = name,
+        .root_module = module,
+    });
+
+    b.installArtifact(exe);
+
+    const build_step = b.step(name, "Build the " ++ name ++ " executable");
+    build_step.dependOn(&exe.step);
+
+    const run_step = b.step("run-" ++ name, "Run the " ++ name ++ " executable");
+    const run_cmd = b.addRunArtifact(exe);
+    run_step.dependOn(&run_cmd.step);
+    run_cmd.step.dependOn(b.getInstallStep());
+
+    if (b.args) |args| {
+        run_cmd.addArgs(args);
+    }
+
+    return module;
 }
