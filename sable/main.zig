@@ -2,7 +2,10 @@ const std = @import("std");
 const builtin = @import("builtin");
 const build_options = @import("build_options");
 
-const SourceFile = @import("SourceFile.zig");
+pub const Token = @import("Token.zig");
+pub const SourceFile = @import("SourceFile.zig");
+pub const primitives = @import("primitives.zig");
+
 const max_open_files = 256;
 
 const usage: []const u8 =
@@ -78,4 +81,8 @@ pub fn main(init: std.process.Init.Minimal) !void {
     defer for (files.items) |src| {
         gpa.free(src.content);
     };
+}
+
+test {
+    std.testing.refAllDecls(@This());
 }

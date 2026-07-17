@@ -5,8 +5,8 @@ content: [:0]const u8 = undefined,
 
 pub const max_size = std.math.maxInt(u32);
 pub const Span = struct {
-    start: u32,
-    end: u32,
+    start: u32 = 0,
+    end: u32 = 0,
 
     pub fn span(start: u32, end: u32) Span {
         return .{ .start = start, .end = end };
