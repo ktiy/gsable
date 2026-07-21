@@ -2,7 +2,6 @@
 
 ## Interpreter
 
-- [ ] Parser error handling
 - [ ] Stack effect resolver
 - [ ] Bytecode compiler
 - [ ] Array model
@@ -17,6 +16,7 @@
 
 # DONE
 
+- [x] Parser error handling
 - [x] Basic parser
 - [x] Basic source error reporting
 - [x] Lexer error handling

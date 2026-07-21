@@ -90,7 +90,17 @@ pub fn main(init: std.process.Init.Minimal) !void {
 
         std.log.debug("parsing {s}", .{src.path});
         var parser = Ast.Parser.init(gpa, tokens);
+        defer parser.deinit();
+
         const ast = try parser.parse();
+
+        if (parser.errors.items.len > 0) {
+            for (parser.errors.items) |e| {
+                try e.report(stderr, src.*);
+            }
+            try stderr.flush();
+            std.process.exit(1);
+        }
 
         if (debug_ast) {
             try ast.dump(stdout, tokens, src.content);

@@ -3,6 +3,7 @@ const Ast = @This();
 const std = @import("std");
 const Token = @import("Token.zig");
 const SourceFile = @import("SourceFile.zig");
+const CompileError = @import("CompileError.zig");
 const prim = @import("primitives.zig");
 
 tree: Node.Slice,
@@ -129,7 +130,9 @@ pub const Parser = struct {
     tmp: std.ArrayList(Node.Index) = .empty,
     extra: std.ArrayList(Node.Index) = .empty,
 
-    pub const Error = std.mem.Allocator.Error || error{ParseError};
+    errors: std.ArrayList(CompileError) = .empty,
+
+    pub const Error = std.mem.Allocator.Error;
 
     pub fn init(gpa: std.mem.Allocator, tokens: Token.Slice) Parser {
         return .{ .gpa = gpa, .tokens = tokens };
@@ -140,6 +143,7 @@ pub const Parser = struct {
         p.nodes.deinit(p.gpa);
         p.tmp.deinit(p.gpa);
         p.extra.deinit(p.gpa);
+        p.errors.deinit(p.gpa);
     }
 
     pub fn parse(p: *Parser) Error!Ast {
@@ -183,7 +187,10 @@ pub const Parser = struct {
             const sym_idx = try p.push(.init(.symbol, sym_tok));
             _ = p.incr();
 
-            const rhs = (try p.parse_train()) orelse return error.ParseError; // TODO: error - expected expression
+            const rhs = (try p.parse_train()) orelse {
+                try p.push_err(.expected_expression, p.pos);
+                return .node(.assign, sym_tok, p.pos, sym_idx, undefined);
+            };
             const rhs_idx = try p.push(rhs);
 
             return .node(.assign, sym_tok, p.pos, sym_idx, rhs_idx);
@@ -220,7 +227,6 @@ pub const Parser = struct {
             const mod_idx = try p.push(.init(.modifier, mod_tok));
 
             const func = (try p.parse_operand()) orelse {
-                // TODO: error
                 return .init(.modifier, mod_tok);
             };
             const func_idx = try p.push(func);
@@ -242,8 +248,11 @@ pub const Parser = struct {
 
         try p.tmp.append(p.gpa, try p.push(first));
         while (p.kind() == .strand) {
-            _ = p.incr();
-            const next = (try p.parse_operand()) orelse return error.ParseError; // TODO: error - dangling '‿'
+            const strand = p.incr();
+            const next = (try p.parse_operand()) orelse {
+                try p.push_err(.dangling_strand, strand);
+                break;
+            };
             try p.tmp.append(p.gpa, try p.push(next));
         }
 
@@ -265,14 +274,22 @@ pub const Parser = struct {
     fn parse_block(p: *Parser) Error!?Node {
         const open = p.incr();
         const body = try p.parse_stmt_list(.brace_close);
-        const close = p.incr(); // TODO: error if no }
+        if (p.kind() != .brace_close) {
+            try p.push_err(.expected_brace_close, p.pos);
+            return .node(.sequence, open, undefined, body.lhs, body.rhs);
+        }
+        const close = p.incr();
         return .node(.sequence, open, close, body.lhs, body.rhs);
     }
 
     fn parse_array(p: *Parser) Error!?Node {
         const open = p.incr();
         const body = try p.parse_stmt_list(.array_close);
-        const close = p.incr(); // TODO: error if no ]
+        if (p.kind() != .array_close) {
+            try p.push_err(.expected_array_close, p.pos);
+            return .node(.array, open, undefined, body.lhs, body.rhs);
+        }
+        const close = p.incr();
         return .node(.array, open, close, body.lhs, body.rhs);
     }
 
@@ -289,6 +306,10 @@ pub const Parser = struct {
             else
                 null,
         };
+    }
+
+    fn push_err(p: *Parser, err: CompileError.Kind, pos: Token.Index) !void {
+        try p.errors.append(p.gpa, .{ .kind = err, .pos = p.tokens.items(.pos)[pos] });
     }
 
     fn push(p: *Parser, node: Node) Error!Node.Index {

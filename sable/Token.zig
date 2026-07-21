@@ -310,8 +310,8 @@ pub const Lexer = struct {
 
         while (true) {
             const t = try lex.next();
-            if (t.kind == .eof) break;
             try list.append(gpa, t);
+            if (t.kind == .eof) break;
         }
 
         return list.toOwnedSlice();
