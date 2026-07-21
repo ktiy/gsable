@@ -3,8 +3,6 @@ const Self = @This();
 path: []const u8,
 content: [:0]const u8 = undefined,
 
-pub const max_size = std.math.maxInt(u32);
-
 var src_buffer: [4096]u8 = undefined;
 
 pub fn read(src: *Self, io: std.Io, arena: std.mem.Allocator) !void {
@@ -87,5 +85,7 @@ fn decode(buf: []const u8) struct { u3, u21 } {
     const cp = std.unicode.utf8Decode(buf[0..len]) catch unreachable;
     return .{ len, cp };
 }
+
+const sbl = @import("sbl");
 
 const std = @import("std");

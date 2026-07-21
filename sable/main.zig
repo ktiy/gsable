@@ -3,10 +3,11 @@ const builtin = @import("builtin");
 const build_options = @import("build_options");
 
 pub const Token = @import("Token.zig");
+pub const Ast = @import("Ast.zig");
 pub const SourceFile = @import("SourceFile.zig");
 pub const primitives = @import("primitives.zig");
 
-const max_open_files = 256;
+pub const max_open_files = 256;
 
 const usage: []const u8 =
     \\usage: sable [options] [input-file...]
@@ -14,6 +15,7 @@ const usage: []const u8 =
     \\   -h, --help         Print this help message and exit.
     \\   -v, --version      Print the version number and exit.
     \\   -r, --repl         Run the sable repl.
+    \\   --parse            Print the ast tree to stderr and exit.
     \\
 ;
 
@@ -39,27 +41,26 @@ pub fn main(init: std.process.Init.Minimal) !void {
     const args = try init.args.toSlice(arena);
 
     var repl: bool = false;
+    var debug_ast: bool = false;
     var files_buf: [max_open_files]SourceFile = undefined;
     var files: std.ArrayList(SourceFile) = .initBuffer(&files_buf);
 
     for (args[1..]) |arg| {
         if (!std.mem.startsWith(u8, arg, "-")) {
             try files.appendBounded(.{ .path = arg });
-        }
-        else if (std.mem.eql(u8, arg, "-h") or std.mem.eql(u8, arg, "--help")) {
+        } else if (std.mem.eql(u8, arg, "-h") or std.mem.eql(u8, arg, "--help")) {
             try stdout.print("{s}", .{usage});
             try stdout.flush();
             std.process.exit(0);
-        }
-        else if (std.mem.eql(u8, arg, "-v") or std.mem.eql(u8, arg, "--version")) {
+        } else if (std.mem.eql(u8, arg, "-v") or std.mem.eql(u8, arg, "--version")) {
             try stderr.print("sable v{s}\n", .{build_options.version});
             try stderr.flush();
             std.process.exit(0);
-        }
-        else if (std.mem.eql(u8, arg, "-r") or std.mem.eql(u8, arg, "--repl")) {
+        } else if (std.mem.eql(u8, arg, "-r") or std.mem.eql(u8, arg, "--repl")) {
             repl = true;
-        }
-        else {
+        } else if (std.mem.eql(u8, arg, "--parse")) {
+            debug_ast = true;
+        } else {
             try stderr.print("sable: {s}: invalid option\n", .{arg});
             try stderr.print("{s}", .{usage});
             try stderr.flush();
@@ -86,6 +87,16 @@ pub fn main(init: std.process.Init.Minimal) !void {
             std.process.exit(1);
         };
         defer tokens.deinit(gpa);
+
+        std.log.debug("parsing {s}", .{src.path});
+        var parser = Ast.Parser.init(gpa, tokens);
+        const ast = try parser.parse();
+
+        if (debug_ast) {
+            try ast.dump(stdout, tokens, src.content);
+            try stdout.flush();
+            std.process.exit(0);
+        }
     }
     defer for (files.items) |src| {
         gpa.free(src.content);
