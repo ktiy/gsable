@@ -16,6 +16,7 @@
         devShells.default = pkgs.mkShell rec {
           buildInputs = with pkgs; [
             zig
+            zola
 
             libGL
             vulkan-loader

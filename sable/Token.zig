@@ -371,6 +371,7 @@ test "lexer" {
         .sub,
         .newline,
         .string,
+        .eof,
     };
 
     var lex = Lexer.init(src, 0);
@@ -409,10 +410,10 @@ test "lexer unclosed string" {
 
 test "invalid utf-8" {
     const gpa = std.testing.allocator;
-    var lex = Lexer.init("⋅\xc3\x28", 0);
+    var lex = Lexer.init(".\xc3\x28", 0);
     const result = lex.collect(gpa);
     try std.testing.expectError(error.invalid_utf8, result);
-    try std.testing.expectEqual(3, lex.pos);
+    try std.testing.expectEqual(1, lex.pos);
 }
 
 const utf = std.unicode;
