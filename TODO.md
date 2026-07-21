@@ -3,6 +3,11 @@
 ## Interpreter
 
 - [ ] Parser error handling
+- [ ] Stack effect resolver
+- [ ] Bytecode compiler
+- [ ] Array model
+- [ ] Bytecode interpreter
+- [ ] Implement primitives
 - [ ] Fancier error reporting
 
 # BACKLOG
