@@ -1,0 +1,19 @@
+image: alpine/edge
+packages:
+  - hut
+  - zola
+oauth: pages.sr.ht/PAGES:RW
+environment:
+  site: kitty.srht.site
+  project: sable
+sources:
+  - https://git.sr.ht/~kitty/sable#site
+tasks:
+  - build: |
+      cd sable
+      zola build
+  - package: |
+      cd sable
+      tar -C public -cvz . > ../site.tar.gz
+  - upload: |
+      hut pages publish -d $site -s $project site.tar.gz

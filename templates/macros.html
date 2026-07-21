@@ -1,0 +1,8 @@
+{% macro breadcrumb(path) %}
+	<a href="/">Sable</a>
+	{% set cur = "/" %}
+	{% for elt in path %}
+		{% set_global cur = cur ~ elt ~ "/" %}
+		/ <a href="{{cur}}">{{ elt }}</a>
+	{% endfor %}
+{%- endmacro %}

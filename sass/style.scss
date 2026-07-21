@@ -1,0 +1,104 @@
+@use "fonts";
+
+$light-theme: (
+		bg: #ffe,
+		fg: #1e1e1e,
+		fg-grey: #776,
+		fg-light-grey: #ccb,
+		link: #11e,
+		link-visited: #21c,
+);
+
+$dark-theme: (
+		bg: #2e2e2e,
+		fg: #ffffef,
+		fg-grey: #999,
+		fg-light-grey: #444,
+		link: #67f,
+		link-visited: #85f,
+);
+
+@mixin generate-theme($map) {
+		@each $k, $x in $map {
+				--#{$k}: #{$x};
+		}
+}
+
+:root {
+		@include generate-theme($light-theme);
+}
+
+@media (prefers-color-scheme: dark) {
+		:root {
+				@include generate-theme($dark-theme);
+		}
+}
+
+* { box-sizing: border-box; }
+
+html {
+		box-sizing: border-box;
+		line-height: 1.2;
+		tab-size: 2;
+		font-family: fonts.$serif;
+		font-size: 20px;
+}
+
+*, *:before, *:after { box-sizing: inherit; }
+
+body,h1,h2,h3,h4,h5,h6,p,ol,ul {
+		margin: 0;
+		padding: 0;
+		font-size: 1em;
+}
+
+h1 {
+		font-size: 1.5em;
+		border-bottom: 1px solid var(--fg-grey);
+}
+
+h2 {
+		font-size: 1.4em;
+		border-bottom: 1px solid var(--fg-light-grey);
+}
+
+h3 { font-size: 1.3em; }
+h4 { font-size: 1.2em; }
+h5 { font-size: 1.1em; }
+h6 { font-size: 1.0em; }
+
+h1,h2,h3,h4,h5,h6 {
+		padding-bottom: 0.2em;
+		margin: 2rem 0 1rem 0;
+}
+
+ol, ul { list-style: none; }
+
+img {
+		max-width: 100%;
+		height: auto;
+}
+
+body {
+		background-color: var(--bg);
+		color: var(--fg);
+		max-width: 800px;
+		margin: 1em auto;
+}
+
+main {
+		display: block;
+}
+
+a {
+		color: var(--link);
+}
+
+a:hover {
+		color: var(--bg);
+		background-color: var(--link);
+}
+
+.breadcrumb {
+		text-align: right;
+}

@@ -1,0 +1,35 @@
+@mixin font-face($name, $path, $format, $xs: 400 normal) {
+		@font-face {
+				font-family: quote($name);
+				src: url('#{$path}') format(quote($format));
+				font-weight: nth($xs, 1);
+				font-style: nth($xs, 2);
+				font-display: swap;
+		}
+}
+
+@mixin load-font($name, $dir, $ft, $format, $variants) {
+		@each $f, $xs in $variants {
+				@include font-face($name, '#{$dir}/#{$f}.#{$ft}', $format, $xs);
+		}
+}
+
+$pt-serif-variants: (
+		'PTSerif-Regular':         400 normal,
+		'PTSerif-Italic':          400 italic,
+		'PTSerif-Bold':            700 normal,
+		'PTSerif-BoldItalic':      700 italic,
+);
+
+$julia-mono-variants: (
+		'JuliaMono-Regular':       400 normal,
+		'JuliaMono-RegularItalic': 400 italic,
+		'JuliaMono-Bold':          700 normal,
+		'JuliaMono-BoldItalic':    700 italic,
+);
+
+@include load-font('PT Serif', 'pt-serif', 'ttf', 'truetype', $pt-serif-variants);
+@include load-font('JuliaMono', 'julia-mono', 'woff2', 'woff2', $julia-mono-variants);
+
+$serif: 'PT Serif', Georgia, serif;
+$monospace: 'JuliaMono', 'Courier New', monospace;

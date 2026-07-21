@@ -1,0 +1,62 @@
+{% import "macros.html" as macros %}
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		{% set page_title = config.title %}
+		{% if config.description %}
+			{% set page_description = config.description | striptags | trim %}
+		{% else %}
+			{% set page_description = config.title %}
+		{% endif %}
+		{% set page_url = config.base_url %}
+		
+		{% if page %}
+			{% if page.title %}
+				{% set page_title = page.title ~ " - " ~ config.title %}
+			{% endif %}
+
+			{% if page.description %}
+				{% set page_description = page.description | striptags | trim %}
+			{% elif page.summary %}
+				{% set page_description = page.summary | striptags | trim %}
+			{% endif %}
+			
+			{% set page_url = page.permalink %}
+		{% elif section %}
+			{% if section.title %}
+				{% set page_title = section.title ~ " - " ~ config.title %}
+			{% endif %}
+
+			{% if section.description %}
+				{% set page_description = section.description | striptags | trim %}
+			{% endif %}
+
+			{% set page_url = section.permalink %}
+		{% endif %}
+
+		<title>{% block title %}{{ page_title }}{% endblock title %}</title>
+		<meta name="description" content="{{ page_description }}">
+		<link rel="canonical" href="{{ page_url }}">
+
+		<meta property="og:site_name" content="{{ config.title }}">
+		<meta property="og:title" content="{{ page_title }}">
+		<meta property="og:description" content="{{ page_description }}">
+		<meta property="og:url" content="{{ page_url }}">
+
+		<meta name="twitter:card" content="summary">
+		<meta name="twitter:title" content="{{ page_title }}">
+		<meta name="twitter:description" content="{{ page_description }}">
+
+		<link rel="stylesheet" href="{{ get_url(path="style.css", trailing_slash=false) }}">
+	</head>
+	<body>
+		<main>
+			{% block content %}{% endblock content %}
+		</main>
+	</body>
+</html>

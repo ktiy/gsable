@@ -1,0 +1,25 @@
+base_url = "https://kitty.srht.site/sable"
+
+compile_sass = true
+
+# Build a search index to be used later on by a JavaScript library
+build_search_index = true
+
+title = "Sable"
+
+[markdown]
+
+[markdown.highlighting]
+theme = "catppuccin-mocha"
+
+[extra]
+
+[extra.author]
+name = "kitty piapiac"
+email = "kcp@disroot.org"
+
+[extra.layout]
+tufte_css = true
+
+[extra.graph]
+enable = true
