@@ -7,7 +7,7 @@ environment:
   site: kitty.srht.site
   project: sable
 sources:
-  - https://git.sr.ht/~kitty/sable#site
+  - https://git.sr.ht/~kitty/sable
 tasks:
   - build: |
       cd sable
