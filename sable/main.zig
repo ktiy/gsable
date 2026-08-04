@@ -2,7 +2,9 @@ const std = @import("std");
 const builtin = @import("builtin");
 const build_options = @import("build_options");
 
+pub const Array = @import("Array.zig");
 pub const Token = @import("Token.zig");
+pub const SymTable = @import("SymbolTable.zig");
 pub const Ast = @import("Ast.zig");
 pub const SourceFile = @import("SourceFile.zig");
 pub const primitives = @import("primitives.zig");

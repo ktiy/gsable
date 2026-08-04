@@ -19,7 +19,7 @@ pub const Data = extern union {
     num: f64,
     byte: u8,
     char: u32,
-    array: *Array,
+    array: *Array.Header,
 };
 
 pub fn num(x: f64) Cell {
@@ -43,10 +43,10 @@ pub fn char(x: u32) Cell {
     };
 }
 
-pub fn array(x: *Array) Cell {
+pub fn array(x: Array) Cell {
     return .{
         .k = .array,
-        .x = .{ .array = x },
+        .x = .{ .array = x.header },
     };
 }
 
@@ -66,7 +66,7 @@ pub fn To(comptime k: Kind) type {
         .num => f64,
         .byte => u8,
         .char => u32,
-        .array => *Array,
+        .array => Array,
         .none => void,
     };
 }
@@ -77,7 +77,7 @@ pub fn into(self: Cell, comptime k: Kind) To(k) {
         .num => self.x.num,
         .byte => self.x.byte,
         .char => self.x.char,
-        .array => self.x.array,
+        .array => Array{ .header = self.x.array },
         .none => {},
     };
 }
