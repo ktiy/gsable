@@ -4,6 +4,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const assert = std.debug.assert;
 
+const ArrayIterator = @import("ArrayIterator.zig");
 const Cell = @import("Cell.zig");
 
 header: *Header,
@@ -115,6 +116,10 @@ pub fn deinit(self: Array, gpa: std.mem.Allocator) void {
     gpa.free(buf[0..size]);
 }
 
+pub fn iter(self: Array) ArrayIterator {
+    return .init(self);
+}
+
 pub fn retain(self: Array) void {
     _ = @atomicRmw(u16, &self.header.refc, .Add, 1, .seq_cst);
 }
@@ -128,6 +133,21 @@ pub fn release(self: Array, gpa: std.mem.Allocator) void {
         }
         self.deinit(gpa);
     }
+}
+
+pub fn flat_index(self: Array, is: []const usize) usize {
+    const shape = self.header.payload().shape();
+    var offset: usize = 0;
+    var stride: usize = 1;
+    var i: usize = self.header.rank;
+    while (i > 0) {
+        i -= 1;
+        const dim = shape[i];
+        offset += is[i] * stride;
+        std.debug.assert(dim >= 0);
+        stride *= @intCast(dim);
+    }
+    return offset;
 }
 
 pub fn any_slice(self: Array) []Cell {
@@ -152,4 +172,40 @@ test "array release" {
 
     try std.testing.expectEqual(a.header.rank, 2);
     try std.testing.expectEqual(a.header.refc, 1);
+}
+
+test "array refc" {
+    const gpa = std.testing.allocator;
+    const a = try Array.init(gpa, &.{4}, .any);
+
+    a.retain();
+    try std.testing.expectEqual(a.header.refc, 2);
+
+    a.release(gpa);
+    try std.testing.expectEqual(a.header.refc, 1);
+
+    a.release(gpa);
+}
+
+test "array release nested" {
+    const gpa = std.testing.allocator;
+
+    const y = try Array.init(gpa, &.{2}, .any);
+    const x = try Array.init(gpa, &.{2}, .any);
+    x.any_slice()[1] = .array(y);
+
+    x.release(gpa);
+}
+
+test "array flat_index" {
+    const gpa = std.testing.allocator;
+    const shape = [_]i64{ 2, 2 };
+
+    const a = try Array.init(gpa, &shape, .any);
+    defer a.release(gpa);
+
+    try std.testing.expectEqual(@as(usize, 0), a.flat_index(&.{ 0, 0 }));
+    try std.testing.expectEqual(@as(usize, 1), a.flat_index(&.{ 0, 1 }));
+    try std.testing.expectEqual(@as(usize, 2), a.flat_index(&.{ 1, 0 }));
+    try std.testing.expectEqual(@as(usize, 3), a.flat_index(&.{ 1, 1 }));
 }
