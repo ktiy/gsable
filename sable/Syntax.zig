@@ -1,4 +1,4 @@
-const Ast = @This();
+const Syntax = @This();
 
 const std = @import("std");
 const Token = @import("Token.zig");
@@ -11,7 +11,7 @@ root: Node.Index,
 extra: []Node.Index,
 
 pub fn dump(
-    ast: Ast,
+    ast: Syntax,
     w: *std.Io.Writer,
     tokens: Token.Slice,
     buf: []const u8,
@@ -22,7 +22,7 @@ pub fn dump(
 const report = struct {
     fn write_node(
         w: *std.Io.Writer,
-        ast: Ast,
+        ast: Syntax,
         tokens: Token.Slice,
         buf: []const u8,
         idx: Node.Index,
@@ -146,7 +146,7 @@ pub const Parser = struct {
         p.errors.deinit(p.gpa);
     }
 
-    pub fn parse(p: *Parser) Error!Ast {
+    pub fn parse(p: *Parser) Error!Syntax {
         const root_node = try p.parse_stmt_list(.eof);
         const root = try p.push(root_node);
 

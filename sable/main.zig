@@ -3,9 +3,9 @@ const builtin = @import("builtin");
 const build_options = @import("build_options");
 
 pub const Array = @import("Array.zig");
+pub const Syntax = @import("Syntax.zig");
 pub const Token = @import("Token.zig");
 pub const SymTable = @import("SymbolTable.zig");
-pub const Ast = @import("Ast.zig");
 pub const SourceFile = @import("SourceFile.zig");
 pub const primitives = @import("primitives.zig");
 
@@ -91,7 +91,7 @@ pub fn main(init: std.process.Init.Minimal) !void {
         defer tokens.deinit(gpa);
 
         std.log.debug("parsing {s}", .{src.path});
-        var parser = Ast.Parser.init(gpa, tokens);
+        var parser = Syntax.Parser.init(gpa, tokens);
         defer parser.deinit();
 
         const ast = try parser.parse();
