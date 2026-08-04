@@ -115,8 +115,27 @@ pub fn deinit(self: Array, gpa: std.mem.Allocator) void {
     gpa.free(buf[0..size]);
 }
 
+pub fn retain(self: Array) void {
+    _ = @atomicRmw(u16, &self.header.refc, .Add, 1, .seq_cst);
+}
+
+pub fn release(self: Array, gpa: std.mem.Allocator) void {
+    if (@atomicRmw(u16, &self.header.refc, .Sub, 1, .seq_cst) == 1) {
+        if (self.is_any()) {
+            for (self.any_slice()) |x| {
+                if (!x.atom()) x.into(.array).release(gpa);
+            }
+        }
+        self.deinit(gpa);
+    }
+}
+
 pub fn any_slice(self: Array) []Cell {
     return self.header.payload().data(Cell);
+}
+
+pub fn is_any(self: Array) bool {
+    return self.header.kind == .any;
 }
 
 fn total_size(kind: Kind, rank: u8, len: u64) usize {
@@ -126,10 +145,10 @@ fn total_size(kind: Kind, rank: u8, len: u64) usize {
     return header_size + shape_size + array_size;
 }
 
-test "init array" {
+test "array release" {
     const gpa = std.testing.allocator;
     const a = try Array.init(gpa, &.{ 2, 2 }, .any);
-    defer a.deinit(gpa);
+    defer a.release(gpa);
 
     try std.testing.expectEqual(a.header.rank, 2);
     try std.testing.expectEqual(a.header.refc, 1);

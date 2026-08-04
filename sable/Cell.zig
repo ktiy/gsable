@@ -12,6 +12,7 @@ pub const Kind = enum(u8) {
     byte,
     char,
     array,
+    none,
 };
 
 pub const Data = extern union {
@@ -49,12 +50,24 @@ pub fn array(x: *Array) Cell {
     };
 }
 
+pub fn none() Cell {
+    return .{
+        .k = .none,
+        .x = undefined,
+    };
+}
+
+pub fn atom(self: Cell) bool {
+    return self.k != .array;
+}
+
 pub fn To(comptime k: Kind) type {
     return switch (k) {
         .num => f64,
         .byte => u8,
         .char => u32,
         .array => *Array,
+        .none => void,
     };
 }
 
@@ -65,5 +78,6 @@ pub fn into(self: Cell, comptime k: Kind) To(k) {
         .byte => self.x.byte,
         .char => self.x.char,
         .array => self.x.array,
+        .none => {},
     };
 }
