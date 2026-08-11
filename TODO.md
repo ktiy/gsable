@@ -1,13 +1,21 @@
 # TODO
 
-## Interpreter
-
+## Compiler
 - [ ] Stack effect resolver
 - [ ] Bytecode compiler
-- [ ] Array model
-- [ ] Bytecode interpreter
-- [ ] Implement primitives
 - [ ] Fancier error reporting
+
+## Interpreter/runtime
+- [ ] Simple bytecode representation
+- [ ] Bytecode interpreter
+
+### Primitives
+- [ ] Basic stack operators
+- [ ] Arithmetic primitives
+
+### Arrays
+- [ ] Simple array representation
+- [ ] Optimized homogenous arrays
 
 # BACKLOG
 
