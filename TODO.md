@@ -6,7 +6,6 @@
 - [ ] Fancier error reporting
 
 ## Interpreter/runtime
-- [ ] Simple bytecode representation
 - [ ] Bytecode interpreter
 
 ### Primitives
@@ -24,6 +23,7 @@
 
 # DONE
 
+- [x] Simple bytecode representation
 - [x] Parser error handling
 - [x] Basic parser
 - [x] Basic source error reporting
