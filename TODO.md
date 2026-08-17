@@ -1,6 +1,7 @@
 # TODO
 
 ## Compiler
+- [ ] Change modifier syntax from prefix to postfix
 - [ ] Stack effect resolver
 - [ ] Bytecode compiler
 - [ ] Fancier error reporting
