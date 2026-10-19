@@ -1,11 +1,10 @@
 const Array = @This();
 
 const std = @import("std");
-const Allocator = std.mem.Allocator;
 const assert = std.debug.assert;
 
-const ArrayIterator = @import("ArrayIterator.zig");
-const Cell = @import("Cell.zig");
+const sbl = @import("sbl");
+const Cell = sbl.Cell;
 
 header: *Header,
 
@@ -116,7 +115,7 @@ pub fn deinit(self: Array, gpa: std.mem.Allocator) void {
     gpa.free(buf[0..size]);
 }
 
-pub fn iter(self: Array) ArrayIterator {
+pub fn iter(self: Array) sbl.ArrayIterator {
     return .init(self);
 }
 

@@ -27,6 +27,12 @@ pub fn token_from_cp(c: u21) Token.Kind {
     };
 }
 
+pub fn Prim(t: Token.Kind) type {
+    return switch (t) {
+        else => @import("prim/nyi.zig"),
+    };
+}
+
 pub fn is_prim(k: Token.Kind) bool {
     const i: u8 = @intFromEnum(Token.Kind.dup);
     const j: u8 = @intFromEnum(Token.Kind.mod);

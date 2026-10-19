@@ -5,17 +5,21 @@ const Bytecode = @import("Bytecode.zig");
 const Cell = @import("Cell.zig");
 const CompiledProgram = Bytecode.Program;
 const Error = @import("RuntimeError.zig");
+const primitives = @import("primitives.zig");
 
 const dat_stack_size = 256;
 const ret_stack_size = 256;
+
+const Dat_P = std.math.IntFittingRange(-1, dat_stack_size);
+const Ret_P = std.mtah.IntFittingRange(-1, ret_stack_size);
 
 prog: CompiledProgram,
 dat: [dat_stack_size]Cell = undefined,
 ret: [ret_stack_size]usize = undefined,
 
 ip: usize = 0,
-dat_p: std.math.IntFittingRange(-1, dat_stack_size) = 0,
-ret_p: std.math.IntFittingRange(-1, ret_stack_size) = 0,
+dat_p: Dat_P,
+ret_p: Ret_P,
 
 e: Error = .none,
 
@@ -53,10 +57,10 @@ pub fn step(m: *Machine) bool {
             m.throw(.nyi);
             return false;
         },
-        .call_prim => |prim| {
-            _ = prim;
-            m.throw(.nyi);
-            return false;
+        .call_prim => |tok| {
+            const prim = primitives.Prim(tok);
+            prim.run();
+            return true;
         },
         .call_lam => |idx| {
             _ = idx;

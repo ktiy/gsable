@@ -3,10 +3,18 @@ const builtin = @import("builtin");
 const build_options = @import("build_options");
 
 pub const Array = @import("Array.zig");
+pub const ArrayIterator = @import("ArrayIterator.zig");
+pub const Bytecode = @import("Bytecode.zig");
+pub const Cell = @import("Cell.zig");
+pub const CompileError = @import("CompileError.zig");
+pub const Machine = @import("Machine.zig");
+pub const Readline = @import("Readline.zig");
+pub const Repl = @import("Repl.zig");
+pub const RuntimeError = @import("RuntimeError.zig");
+pub const SourceFile = @import("SourceFile.zig");
+pub const SymTable = @import("SymbolTable.zig");
 pub const Syntax = @import("Syntax.zig");
 pub const Token = @import("Token.zig");
-pub const SymTable = @import("SymbolTable.zig");
-pub const SourceFile = @import("SourceFile.zig");
 pub const primitives = @import("primitives.zig");
 
 pub const max_open_files = 256;
@@ -68,6 +76,12 @@ pub fn main(init: std.process.Init.Minimal) !void {
             try stderr.flush();
             std.process.exit(1);
         }
+    }
+
+    if (repl) {
+        var x = Repl.init();
+        try x.run();
+        std.process.exit(1);
     }
 
     if (files.items.len == 0 and !repl) {
