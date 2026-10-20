@@ -1,6 +1,8 @@
 pub const Readline = @This();
 
 const std = @import("std");
+const sbl = @import("sbl");
+const Repl = sbl.Repl;
 const linux = std.os.linux; // todo: support for other os
 const posix = std.posix;
 
@@ -27,6 +29,7 @@ pub fn read_line(self: *Readline, prompt: []const u8) ![]const u8 {
 
     self.write_bytes(prompt);
 
+    var state: enum { start, backslash } = .start;
     while (true) {
         const c = try self.read_byte();
         switch (c) {
@@ -50,10 +53,29 @@ pub fn read_line(self: *Readline, prompt: []const u8) ![]const u8 {
                 // backspace
                 if (self.len > 0) {
                     self.len -= 1;
+                    while (self.len >= 0 and (self.buf[self.len] & 0xc0) == 0x80) {
+                        self.len -= 1;
+                    }
                     self.write_bytes("\x08 \x08");
                 }
             },
+            '\\' => {
+                state = .backslash;
+            },
             else => {
+                if (state == .backslash) {
+                    if (Repl.keymap(c)) |d| {
+                        const len = try std.unicode.utf8Encode(d, self.buf[self.len..]);
+                        self.write_bytes(self.buf[self.len..][0..len]);
+                        self.len += len;
+                    } else {
+                        self.buf[self.len] = '\\';
+                        self.len += 1;
+                        self.write_bytes("\\");
+                    }
+                    state = .start;
+                    continue;
+                }
                 if (c >= 32 and self.len < self.buf.len) {
                     self.buf[self.len] = c;
                     self.len += 1;
