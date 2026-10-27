@@ -1,7 +1,7 @@
 # TODO
 
 ## Compiler
-- [ ] Stack effect resolver
+- [ ] Review semantic analysis
 - [ ] Bytecode compiler
 - [ ] Fancier error reporting
 
@@ -23,6 +23,7 @@
 
 # DONE
 
+- [x] Stack effect resolver
 - [x] Change modifier syntax from prefix to postfix
 - [x] Basic REPL interface
 - [x] Simple bytecode representation

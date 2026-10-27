@@ -2,6 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const build_options = @import("build_options");
 
+pub const Analysis = @import("Analysis.zig");
 pub const Array = @import("Array.zig");
 pub const ArrayIterator = @import("ArrayIterator.zig");
 pub const Bytecode = @import("Bytecode.zig");

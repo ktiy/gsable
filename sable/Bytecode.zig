@@ -56,4 +56,10 @@ pub const StackEffect = struct {
         const out: isize = @intCast(self.out);
         return out - in;
     }
+
+    pub fn then(x: StackEffect, y: StackEffect) StackEffect {
+        const xh = @min(x.out, y.in);
+        const yn = y.in - xh;
+        return .init(x.in + yn, x.out - xh + y.out);
+    }
 };
