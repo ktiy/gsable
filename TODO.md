@@ -1,7 +1,6 @@
 # TODO
 
 ## Compiler
-- [ ] Change modifier syntax from prefix to postfix
 - [ ] Stack effect resolver
 - [ ] Bytecode compiler
 - [ ] Fancier error reporting
@@ -24,6 +23,8 @@
 
 # DONE
 
+- [x] Change modifier syntax from prefix to postfix
+- [x] Basic REPL interface
 - [x] Simple bytecode representation
 - [x] Parser error handling
 - [x] Basic parser

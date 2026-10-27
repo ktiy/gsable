@@ -222,25 +222,27 @@ pub const Parser = struct {
     }
 
     fn parse_mod(p: *Parser) Error!?Node {
+        const first_tok = p.pos;
+        const first = (try p.parse_operand()) orelse return null;
+
         if (prim.is_mod(p.kind())) {
             const mod_tok = p.incr();
             const mod_idx = try p.push(.init(.modifier, mod_tok));
-
-            const func = (try p.parse_operand()) orelse {
-                return .init(.modifier, mod_tok);
-            };
-            const func_idx = try p.push(func);
-
-            return .node(.modify, mod_tok, p.pos, func_idx, mod_idx);
+            const first_idx = try p.push(first);
+            return .node(.modify, mod_tok, p.pos, first_idx, mod_idx);
         }
 
-        return p.parse_strand();
+        return p.parse_strand_body(first_tok, first);
     }
 
     fn parse_strand(p: *Parser) Error!?Node {
-        const start_tok = p.pos;
+        const first_tok = p.pos;
         const first = (try p.parse_operand()) orelse return null;
 
+        return p.parse_strand_body(first_tok, first);
+    }
+
+    fn parse_strand_body(p: *Parser, first_tok: Token.Index, first: Node) Error!?Node {
         if (p.kind() != .strand) return first;
 
         const scratch_start = p.tmp.items.len;
@@ -260,7 +262,7 @@ pub const Parser = struct {
         try p.extra.appendSlice(p.gpa, p.tmp.items[scratch_start..]);
         const extra_end: u32 = @intCast(p.extra.items.len);
 
-        return .node(.array, start_tok, p.pos, extra_start, extra_end);
+        return .node(.array, first_tok, p.pos, extra_start, extra_end);
     }
 
     fn parse_operand(p: *Parser) Error!?Node {
