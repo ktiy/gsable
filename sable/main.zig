@@ -27,7 +27,8 @@ const usage: []const u8 =
     \\   -h, --help         Print this help message and exit.
     \\   -v, --version      Print the version number and exit.
     \\   -r, --repl         Run the sable repl.
-    \\   --parse            Print the ast tree to stderr and exit.
+    \\   --verbose-ast      Dumps the parsed ast tree to stderr.
+    \\   --verbose-bc       Dumps the compiled bytecode to stderr.
     \\
 ;
 
@@ -53,9 +54,11 @@ pub fn main(init: std.process.Init.Minimal) !void {
     const args = try init.args.toSlice(arena);
 
     var repl: bool = false;
-    var debug_ast: bool = false;
     var files_buf: [max_open_files]SourceFile = undefined;
     var files: std.ArrayList(SourceFile) = .initBuffer(&files_buf);
+
+    var debug_ast: bool = false;
+    var debug_bc: bool = false;
 
     for (args[1..]) |arg| {
         if (!std.mem.startsWith(u8, arg, "-")) {
@@ -70,8 +73,10 @@ pub fn main(init: std.process.Init.Minimal) !void {
             std.process.exit(0);
         } else if (eq(arg, "-r") or eq(arg, "--repl")) {
             repl = true;
-        } else if (eq(arg, "--parse")) {
+        } else if (eq(arg, "--verbose-ast")) {
             debug_ast = true;
+        } else if (eq(arg, "--verbose-bc")) {
+            debug_bc = true;
         } else {
             try stderr.print("sable: {s}: invalid option\n", .{arg});
             try stderr.print("{s}", .{usage});
@@ -117,9 +122,8 @@ pub fn main(init: std.process.Init.Minimal) !void {
         try report_errors(src, ast.errors);
 
         if (debug_ast) {
-            try ast.dump(stdout, tokens, src.content);
+            try ast.dump(stderr, tokens, src.content);
             try stdout.flush();
-            std.process.exit(0);
         }
 
         var st = try SymTable.init(gpa);
@@ -154,8 +158,10 @@ pub fn main(init: std.process.Init.Minimal) !void {
         defer prog.deinit(gpa);
         try report_errors(src, prog.errors);
 
-        for (prog.bc) |inst| {
-            std.debug.print("{f}\n", .{inst});
+        if (debug_bc) {
+            for (prog.bc) |inst| {
+                try stderr.print("{f}\n", .{inst});
+            }
         }
     }
     defer for (files.items) |src| {

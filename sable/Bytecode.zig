@@ -47,7 +47,7 @@ pub const Inst = union(enum) {
             .call_prim => |x| try w.print("CALL (prim #{x})", .{x}),
             .call_lam => |x| try w.print("CALL (func #{x})", .{x}),
             .pop_into_sym => |x| try w.print("-> (sym #{x})", .{x}),
-            .pop_into_arr => |x| try w.print("->{d} array", .{x}),
+            .pop_into_arr => |x| try w.print("[{d} ->]", .{x}),
             .ret => try w.print("RETURN", .{}),
         }
     }

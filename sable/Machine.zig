@@ -72,6 +72,11 @@ pub fn step(m: *Machine) bool {
             m.throw(.nyi);
             return false;
         },
+        .pop_into_arr => |num| {
+            _ = num;
+            m.throw(.nyi);
+            return false;
+        },
         .ret => {
             m.throw(.nyi);
             return false;

@@ -113,8 +113,6 @@ fn deinit(w: *Compiler) void {
 }
 
 fn expr(w: *Compiler, n: Node.Index) E!void {
-    std.log.debug("{}", .{w.ast.tree.get(n).kind});
-
     switch (w.node(.kind, n)) {
         inline .real, .byte, .string => |k| try w.push_const(k, n),
 
@@ -190,7 +188,6 @@ fn is_const(w: *Compiler, comptime k: Node.Kind, n: Node.Index) bool {
         .array => {
             const lhs = w.node(.lhs, n);
             const rhs = w.node(.rhs, n);
-            std.log.debug("{} {d} {d} {d}", .{ k, lhs, rhs, n });
             for (w.ast.extra[lhs..rhs]) |m| {
                 const m_is_const = switch (w.node(.kind, m)) {
                     inline else => |j| w.is_const(j, m),
