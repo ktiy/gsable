@@ -6,9 +6,9 @@ pub fn token_from_cp(c: u21) Token.Kind {
     return switch (c) {
         '.' => .dup, //     x -- x x
         ',' => .drop, //    x --
-        '~' => .swap, //  x a -- a x
-        '⫦' => .over, //  x a -- x a x
-        '⊪' => .rot, // x a j -- a j x
+        '~' => .swap, //  a x -- x a
+        '⫦' => .over, //  a x -- a x a
+        '⊪' => .rot, // j a x -- a x j
         'ι' => .iota,
         'ρ' => .shape,
         '⧻' => .length,
@@ -27,7 +27,10 @@ pub fn token_from_cp(c: u21) Token.Kind {
     };
 }
 
-pub fn run(t: Token.Kind) *const fn (m: *sbl.Machine) void {
+pub const Prim = fn (m: *sbl.Machine) void;
+
+pub fn run(t: Token.Kind) *const Prim {
+    const arith = @import("prim/arith.zig");
     const stack = @import("prim/stack.zig");
     const nyi = @import("prim/nyi.zig");
     return switch (t) {
@@ -36,6 +39,12 @@ pub fn run(t: Token.Kind) *const fn (m: *sbl.Machine) void {
         .swap => stack.swap,
         .over => stack.over,
         .rot => stack.rot,
+        .add => arith.add,
+        .sub => arith.sub,
+        .mul => arith.mul,
+        .div => arith.div,
+        .pow => arith.pow,
+        .mod => arith.mod,
         .iota => @import("prim/iota.zig").run,
         else => nyi.run,
     };

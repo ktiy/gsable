@@ -13,6 +13,16 @@ pub const Kind = enum(u8) {
     char,
     array,
     none,
+
+    pub fn atom(k: Kind) bool {
+        return k != .array and k != .none;
+    }
+    pub fn promote(a: Kind, x: Kind) Kind {
+        std.debug.assert(a.atom() and x.atom());
+        if (a == .char or x == .char) return .char;
+        if (a == .num or x == .num) return .num;
+        return .byte;
+    }
 };
 
 pub const Data = extern union {
@@ -57,8 +67,16 @@ pub fn none() Cell {
     };
 }
 
+pub fn promote(a: Cell, x: Cell) Kind {
+    return a.k.promote(x.k);
+}
+
 pub fn atom(self: Cell) bool {
-    return self.k != .array;
+    return self.k.atom();
+}
+
+pub fn empty(self: Cell) bool {
+    return self.k == .none;
 }
 
 pub fn To(comptime k: Kind) type {
@@ -79,6 +97,32 @@ pub fn into(self: Cell, comptime k: Kind) To(k) {
         .char => self.x.char,
         .array => Array{ .header = self.x.array },
         .none => {},
+    };
+}
+
+pub fn coerce(self: Cell, comptime k: Kind) To(k) {
+    std.debug.assert(self.atom());
+
+    return switch (k) {
+        .num => switch (self.k) {
+            .num => self.x.num,
+            .byte => @floatFromInt(self.x.byte),
+            .char => @floatFromInt(self.x.char),
+            else => unreachable,
+        },
+        .char => switch (self.k) {
+            .num => @intFromFloat(self.x.num),
+            .byte => @as(u32, self.x.byte),
+            .char => self.x.char,
+            else => unreachable,
+        },
+        .byte => switch (self.k) {
+            .num => @intFromFloat(self.x.num),
+            .byte => self.x.byte,
+            .char => @truncate(self.x.char),
+            else => unreachable,
+        },
+        else => unreachable,
     };
 }
 
