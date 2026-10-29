@@ -219,16 +219,15 @@ fn check(src: [:0]const u8, expected: StackEffect, expected_errs: usize) !void {
     const gpa = std.testing.allocator;
 
     var lex = Token.Lexer.init(src, 0);
-    const ts = try lex.collect(gpa);
+    var ts = try lex.collect(gpa);
+    defer ts.deinit(gpa);
+
     var p = Syntax.Parser.init(gpa, ts);
     defer p.deinit();
 
-    const ast = try p.parse();
-    defer {
-        var tree = ast.tree;
-        tree.deinit(gpa);
-        gpa.free(ast.extra);
-    }
+    var ast = try p.parse();
+    defer ast.deinit(gpa);
+
     try std.testing.expectEqual(0, p.errors.items.len);
 
     var st = try SymTable.init(gpa);
