@@ -1,7 +1,7 @@
 const RuntimeError = @This();
 const std = @import("std");
 
-k: Kind,
+kind: Kind,
 i: SourceIndex = .none,
 
 pub const SourceIndex = enum(usize) {
@@ -32,4 +32,5 @@ pub fn report(self: RuntimeError, w: *std.Io.Writer, buf: []const u8) !void {
     try w.print("{f}", .{self});
     _ = buf;
     try w.writeByte('\n');
+    try w.flush();
 }

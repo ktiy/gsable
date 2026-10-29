@@ -1,14 +1,14 @@
 const std = @import("std");
-
-const Token = @import("Token.zig");
+const sbl = @import("sbl");
+const Token = sbl.Token;
 
 pub fn token_from_cp(c: u21) Token.Kind {
     return switch (c) {
-        '.' => .dup, //    a -- a a
-        ',' => .drop, //    a --
-        '~' => .swap, //  a b -- b a
-        '⫦' => .over, //  a b -- a b a
-        '⊪' => .rot, //a b c -- b c a
+        '.' => .dup, //     x -- x x
+        ',' => .drop, //    x --
+        '~' => .swap, //  x a -- a x
+        '⫦' => .over, //  x a -- x a x
+        '⊪' => .rot, // x a j -- a j x
         'ι' => .iota,
         'ρ' => .shape,
         '⧻' => .length,
@@ -27,9 +27,9 @@ pub fn token_from_cp(c: u21) Token.Kind {
     };
 }
 
-pub fn Prim(t: Token.Kind) type {
+pub fn run(t: Token.Kind) *const fn (m: *sbl.Machine) void {
     return switch (t) {
-        else => @import("prim/nyi.zig"),
+        else => @import("prim/nyi.zig").run,
     };
 }
 

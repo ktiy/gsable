@@ -20,7 +20,7 @@ pub const Program = struct {
             gpa.free(self.errors);
             return;
         }
-        for (self.arrays) |a| a.release(gpa);
+        for (self.arrays) |a| a.deinit(gpa);
         gpa.free(self.bc);
         gpa.free(self.loc);
         gpa.free(self.arrays);

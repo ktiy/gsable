@@ -11,15 +11,15 @@ const dat_stack_size = 256;
 const ret_stack_size = 256;
 
 const Dat_P = std.math.IntFittingRange(-1, dat_stack_size);
-const Ret_P = std.mtah.IntFittingRange(-1, ret_stack_size);
+const Ret_P = std.math.IntFittingRange(-1, ret_stack_size);
 
 prog: CompiledProgram,
 dat: [dat_stack_size]Cell = undefined,
 ret: [ret_stack_size]usize = undefined,
 
 ip: usize = 0,
-dat_p: Dat_P,
-ret_p: Ret_P,
+dat_p: Dat_P = 0,
+ret_p: Ret_P = 0,
 
 e: Error = .none,
 
@@ -34,7 +34,7 @@ pub fn deinit(m: *Machine) void {
 }
 
 pub fn throw(m: *Machine, e: Error.Kind) void {
-    m.e = .{ .k = e };
+    m.e = .{ .kind = e };
 }
 
 pub fn step(m: *Machine) bool {
@@ -42,7 +42,7 @@ pub fn step(m: *Machine) bool {
     const op = m.prog.bc[m.ip];
     m.ip += 1;
 
-    if (m.e.k != .none) return false;
+    if (m.e.kind != .none) return false;
     switch (op) {
         .call_val => |cell| {
             return m.push(cell);
@@ -58,8 +58,8 @@ pub fn step(m: *Machine) bool {
             return false;
         },
         .call_prim => |tok| {
-            const prim = primitives.Prim(tok);
-            prim.run();
+            const prim = primitives.run(tok);
+            prim(m);
             return true;
         },
         .call_lam => |idx| {
@@ -78,7 +78,7 @@ pub fn step(m: *Machine) bool {
             return false;
         },
         .ret => {
-            m.throw(.nyi);
+            if (m.ret_p != 0) m.throw(.nyi);
             return false;
         },
     }
@@ -86,18 +86,19 @@ pub fn step(m: *Machine) bool {
 
 pub fn push(m: *Machine, x: Cell) bool {
     std.debug.assert(m.dat_p < dat_stack_size);
-    m.dat[m.dat_p] = x;
+    m.dat[@as(usize, @intCast(m.dat_p))] = x;
     m.dat_p += 1;
     return true;
 }
 
 pub fn top(m: *Machine) *Cell {
     std.debug.assert(m.dat_p > 0);
-    return &m.dat[m.dat_p - 1];
+    const dat: usize = @intCast(m.dat_p);
+    return &m.dat[dat - 1];
 }
 
 pub fn pop(m: *Machine) Cell {
     std.debug.assert(m.dat_p > 0);
     m.dat_p -= 1;
-    return m.dat[m.dat_p];
+    return m.dat[@as(usize, @intCast(m.dat_p))];
 }

@@ -162,7 +162,26 @@ pub fn main(init: std.process.Init.Minimal) !void {
             for (prog.bc) |inst| {
                 try stderr.print("{f}\n", .{inst});
             }
+            try stderr.flush();
         }
+
+        var m = Machine.init(prog);
+        defer m.deinit();
+
+        while (m.step()) {}
+
+        if (m.e.kind != .none) {
+            try m.e.report(stderr, src.content);
+            std.process.exit(1);
+        }
+
+        if (m.dat_p > 1) {
+            while (m.dat_p > 0) std.log.info("{d}: {f}", .{ m.dat_p, m.pop() });
+        } else if (m.dat_p > 0) {
+            while (m.dat_p > 0) std.log.info("{f}", .{m.pop()});
+        }
+
+        std.process.exit(0);
     }
     defer for (files.items) |src| {
         gpa.free(src.content);
