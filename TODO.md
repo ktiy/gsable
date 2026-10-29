@@ -1,8 +1,12 @@
 # TODO
 
+## Syntax
+- [ ] Multi-dimension array syntax
+
 ## Compiler
 - [ ] Review semantic analysis
-- [ ] Bytecode compiler
+- [ ] Compiling modifiers
+- [ ] Compiling builtins
 - [ ] Fancier error reporting
 
 ## Interpreter/runtime
@@ -23,6 +27,7 @@
 
 # DONE
 
+- [x] Bytecode compiling
 - [x] Stack effect resolver
 - [x] Change modifier syntax from prefix to postfix
 - [x] Basic REPL interface
