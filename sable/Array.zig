@@ -115,6 +115,26 @@ pub fn deinit(self: Array, gpa: std.mem.Allocator) void {
     gpa.free(buf[0..size]);
 }
 
+/// copy on write if `ref_count` > 1
+pub fn prepare_write(self: Array, gpa: std.mem.Allocator) !Array {
+    if (self.header.refc == 1) return self;
+
+    const kind = self.header.kind;
+    const clone = try Array.init(gpa, self.shape(), kind);
+
+    switch (kind) {
+        .any => {
+            @memcpy(clone.any_slice(), self.any_slice());
+            for (clone.any_slice()) |elem| {
+                if (elem.k == .array) elem.into(.array).retain();
+            }
+        },
+    }
+
+    self.release(gpa);
+    return clone;
+}
+
 pub fn shrink(self: Array, gpa: std.mem.Allocator, len: usize) !Array {
     const h = self.header;
     assert(h.rank == 1);
@@ -151,13 +171,13 @@ pub fn release(self: Array, gpa: std.mem.Allocator) void {
 }
 
 pub fn flat_index(self: Array, is: []const usize) usize {
-    const shape = self.header.payload().shape();
+    const sh = self.header.payload().shape();
     var offset: usize = 0;
     var stride: usize = 1;
     var i: usize = self.header.rank;
     while (i > 0) {
         i -= 1;
-        const dim = shape[i];
+        const dim = sh[i];
         offset += is[i] * stride;
         std.debug.assert(dim >= 0);
         stride *= @intCast(dim);
@@ -178,6 +198,14 @@ fn total_size(kind: Kind, rank: u8, len: u64) usize {
     const shape_size = @as(usize, rank) * @sizeOf(Dim);
     const array_size = kind.array_size(len);
     return header_size + shape_size + array_size;
+}
+
+pub fn payload(self: Array) Payload {
+    return self.header.payload();
+}
+
+pub fn shape(self: Array) []i64 {
+    return self.payload().shape();
 }
 
 test "array release" {
@@ -214,13 +242,42 @@ test "array release nested" {
 
 test "array flat_index" {
     const gpa = std.testing.allocator;
-    const shape = [_]i64{ 2, 2 };
+    const sh = [_]i64{ 2, 2 };
 
-    const a = try Array.init(gpa, &shape, .any);
+    const a = try Array.init(gpa, &sh, .any);
     defer a.release(gpa);
 
     try std.testing.expectEqual(@as(usize, 0), a.flat_index(&.{ 0, 0 }));
     try std.testing.expectEqual(@as(usize, 1), a.flat_index(&.{ 0, 1 }));
     try std.testing.expectEqual(@as(usize, 2), a.flat_index(&.{ 1, 0 }));
     try std.testing.expectEqual(@as(usize, 3), a.flat_index(&.{ 1, 1 }));
+}
+
+test "array cow" {
+    const gpa = std.testing.allocator;
+
+    var x = try Array.init(gpa, &[_]i64{3}, .any);
+    for (x.any_slice(), 0..) |*elem, i| {
+        elem.k = .num;
+        elem.x.num = @floatFromInt(i);
+    }
+
+    var y1 = x;
+    y1.retain();
+
+    var y2 = try y1.prepare_write(gpa);
+
+    try std.testing.expect(y1.header != y2.header);
+    try std.testing.expectEqual(@as(f64, 1), y1.any_slice()[1].into(.num));
+
+    y2.any_slice()[2] = .num(9);
+    try std.testing.expectEqual(@as(f64, 9), y2.any_slice()[2].into(.num));
+    try std.testing.expectEqual(@as(f64, 2), y1.any_slice()[2].into(.num));
+
+    const y3 = y2;
+    y2 = try y2.prepare_write(gpa);
+    try std.testing.expect(y2.header == y3.header);
+
+    y1.release(gpa);
+    y2.release(gpa);
 }
