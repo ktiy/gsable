@@ -135,13 +135,35 @@ pub fn main(init: std.process.Init.Minimal) !void {
         );
         defer sema.deinit(gpa);
         try report_errors(src, sema.errors);
+
+        var env: Compiler.Env = .empty;
+        defer env.deinit(gpa);
+
+        std.log.debug("compiling {s}", .{src.path});
+        var prog = try Compiler.run(
+            gpa,
+            ast,
+            tokens,
+            src.content,
+            &st,
+            sema,
+            &env,
+            0,
+            0,
+        );
+        defer prog.deinit(gpa);
+        try report_errors(src, prog.errors);
+
+        for (prog.bc) |inst| {
+            std.debug.print("{f}\n", .{inst});
+        }
     }
     defer for (files.items) |src| {
         gpa.free(src.content);
     };
 }
 
-fn report_errors(src: *SourceFile, es: []CompileError) !void {
+fn report_errors(src: *SourceFile, es: []const CompileError) !void {
     if (es.len > 0) {
         for (es) |e| try e.report(stderr, src.*);
         try stderr.flush();

@@ -69,7 +69,7 @@ pub const Node = struct {
         return .{
             .kind = k,
             .token = t,
-            .token_end = undefined,
+            .token_end = t,
             .lhs = undefined,
             .rhs = undefined,
         };
@@ -347,7 +347,7 @@ const report = struct {
         const node = ast.tree.get(idx);
         const connector: []const u8 =
             if (is_root) "" else if (is_last) "└─" else "├─";
-        try w.print("{s}{s}{s}", .{ prefix, connector, @tagName(node.kind) });
+        try w.print("{s}{s} {d}) {s}", .{ prefix, connector, idx, @tagName(node.kind) });
 
         switch (node.kind) {
             .builtin, .symbol, .real, .byte, .string, .primitive, .modifier => {

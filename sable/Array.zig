@@ -115,6 +115,22 @@ pub fn deinit(self: Array, gpa: std.mem.Allocator) void {
     gpa.free(buf[0..size]);
 }
 
+pub fn shrink(self: Array, gpa: std.mem.Allocator, len: usize) !Array {
+    const h = self.header;
+    assert(h.rank == 1);
+    assert(len <= h.len);
+
+    const old_z = total_size(h.kind, h.rank, h.len);
+    const new_z = total_size(h.kind, h.rank, len);
+    const old_buf: [*]align(8) u8 = @ptrCast(h);
+    const new = try gpa.realloc(old_buf[0..old_z], new_z);
+
+    const nh: *Header = @ptrCast(new.ptr);
+    nh.len = len;
+    nh.payload().shape()[0] = @intCast(len);
+    return .{ .header = nh };
+}
+
 pub fn iter(self: Array) sbl.ArrayIterator {
     return .init(self);
 }

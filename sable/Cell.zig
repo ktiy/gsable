@@ -84,18 +84,18 @@ pub fn into(self: Cell, comptime k: Kind) To(k) {
 
 pub fn format(self: Cell, w: *std.Io.Writer) !void {
     switch (self.k) {
-        .num => try w.print("{d}", .{self.into(.num)}),
-        .byte => try w.print("#{x}", .{self.into(.byte)}),
+        .num => try w.print("(real {d})", .{self.into(.num)}),
+        .byte => try w.print("(byte #{x})", .{self.into(.byte)}),
         .char => {
             const cp: u21 = @truncate(self.into(.char));
             var buf: [4]u8 = undefined;
             const len = std.unicode.utf8Encode(cp, &buf) catch {
-                try w.print("U+{X}", .{cp});
+                try w.print("(char #{X})", .{cp});
                 return;
             };
             try w.writeAll(buf[0..len]);
         },
         .array => try w.print("nyi", .{}),
-        .none => try w.print("[]", .{}),
+        .none => try w.print("(none)", .{}),
     }
 }

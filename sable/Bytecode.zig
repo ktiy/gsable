@@ -1,13 +1,12 @@
 const Bytecode = @This();
-
 const std = @import("std");
-const Array = @import("Array.zig");
-const Token = @import("Token.zig");
-const Cell = @import("Cell.zig");
-const CompileError = @import("CompileError.zig");
-const SourceFile = @import("SourceFile.zig");
-const SymbolTable = @import("SymbolTable.zig");
-const Symbol = SymbolTable.Symbol;
+const sbl = @import("sbl");
+const Array = sbl.Array;
+const Cell = sbl.Cell;
+const CompileError = sbl.CompileError;
+const Token = sbl.Token;
+const SourceFile = sbl.SourceFile;
+const Symbol = sbl.SymTable.Symbol;
 
 pub const Program = struct {
     bc: []const Inst = undefined,
@@ -15,25 +14,40 @@ pub const Program = struct {
     arrays: []const Array = undefined,
     lambdas: []const usize = undefined,
     errors: []const CompileError,
+
+    pub fn deinit(self: *Program, gpa: std.mem.Allocator) void {
+        if (self.errors.len > 0) {
+            gpa.free(self.errors);
+            return;
+        }
+        for (self.arrays) |a| a.release(gpa);
+        gpa.free(self.bc);
+        gpa.free(self.loc);
+        gpa.free(self.arrays);
+        gpa.free(self.lambdas);
+        gpa.free(self.errors);
+    }
 };
 
 pub const Inst = union(enum) {
     call_val: Cell,
     call_arr: usize,
     call_sym: Symbol,
-    call_prim: Token,
+    call_prim: Token.Kind,
     call_lam: usize,
     pop_into_sym: Symbol,
+    pop_into_arr: u32,
     ret,
 
     pub fn format(self: Inst, w: *std.Io.Writer) !void {
         switch (self) {
-            .call_val => |x| try w.print("PUSH {d}", .{x}),
-            .call_arr => |x| try w.print("PUSH ARRAY {d}", .{x}),
-            .call_sym => |x| try w.print("PUSH SYMBOL {d}", .{x}),
-            .call_prim => |x| try w.print("CALL PRIM {}", .{x}),
-            .call_lam => |x| try w.print("CALL FUNCTION @ {d}", .{x}),
-            .pop_into_sym => |x| try w.print("POP INTO SYMBOL {d}", .{x}),
+            .call_val => |x| try w.print("PUSH {f}", .{x}),
+            .call_arr => |x| try w.print("PUSH (array #{x})", .{x}),
+            .call_sym => |x| try w.print("CALL (symbol #{x})", .{x}),
+            .call_prim => |x| try w.print("CALL (prim #{x})", .{x}),
+            .call_lam => |x| try w.print("CALL (func #{x})", .{x}),
+            .pop_into_sym => |x| try w.print("-> (sym #{x})", .{x}),
+            .pop_into_arr => |x| try w.print("->{d} array", .{x}),
             .ret => try w.print("RETURN", .{}),
         }
     }

@@ -12,6 +12,7 @@ pub const Kind = enum {
     expected_expression,
     dangling_strand,
     invalid_binding,
+    invalid_token,
     stack_underflow,
     unbound_symbol,
 
@@ -24,6 +25,7 @@ pub const Kind = enum {
             .expected_brace_close => "expected `}`",
             .expected_expression => "expected expression",
             .dangling_strand => "dangling strand",
+            .invalid_token => "invalid token",
             .invalid_binding => "invalid binding",
             .stack_underflow => "stack underflow",
             .unbound_symbol => "unbound symbol",
