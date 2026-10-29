@@ -1,14 +1,22 @@
 const Syntax = @This();
 
+const sbl = @import("sbl");
 const std = @import("std");
-const Token = @import("Token.zig");
-const SourceFile = @import("SourceFile.zig");
-const CompileError = @import("CompileError.zig");
-const prim = @import("primitives.zig");
+const Token = sbl.Token;
+const Span = sbl.SourceFile.Span;
+const CompileError = sbl.CompileError;
+const prim = sbl.primitives;
 
 tree: Node.Slice,
 root: Node.Index,
 extra: []Node.Index,
+errors: []CompileError,
+
+pub fn parse(gpa: std.mem.Allocator, ts: Token.Slice) !Syntax {
+    var p = Parser.init(gpa, ts);
+    defer p.deinit();
+    return p.parse();
+}
 
 pub fn deinit(ast: *Syntax, gpa: std.mem.Allocator) void {
     ast.tree.deinit(gpa);
@@ -24,54 +32,6 @@ pub fn dump(
 ) !void {
     try report.write_node(w, ast, tokens, buf, ast.root, "", true, true);
 }
-
-const report = struct {
-    fn write_node(
-        w: *std.Io.Writer,
-        ast: Syntax,
-        tokens: Token.Slice,
-        buf: []const u8,
-        idx: Node.Index,
-        prefix: []const u8,
-        is_last: bool,
-        is_root: bool,
-    ) !void {
-        const node = ast.tree.get(idx);
-        const connector: []const u8 =
-            if (is_root) "" else if (is_last) "└─" else "├─";
-        try w.print("{s}{s}{s}", .{ prefix, connector, @tagName(node.kind) });
-
-        switch (node.kind) {
-            .builtin, .symbol, .real, .byte, .string, .primitive, .modifier => {
-                const pos = tokens.items(.pos)[node.token];
-                const loc = pos.line_col(buf);
-                try w.print(" \"{s}\" ({d}:{d})\n", .{ pos.slice(buf), loc.line, loc.column });
-            },
-            .assign, .modify => {
-                try w.print("\n", .{});
-
-                var prefix_buf: [512]u8 = undefined;
-                const child_prefix = try child_prefix_buf(&prefix_buf, prefix, is_last, is_root);
-                try write_node(w, ast, tokens, buf, node.lhs, child_prefix, false, false);
-                try write_node(w, ast, tokens, buf, node.rhs, child_prefix, true, false);
-            },
-            .array, .sequence => {
-                const children = ast.extra[node.lhs..node.rhs];
-                try w.print(" [{d}]\n", .{children.len});
-                var prefix_buf: [512]u8 = undefined;
-                const child_prefix = try child_prefix_buf(&prefix_buf, prefix, is_last, is_root);
-                for (children, 0..) |c, i| {
-                    try write_node(w, ast, tokens, buf, c, child_prefix, i == children.len - 1, false);
-                }
-            },
-        }
-    }
-
-    fn child_prefix_buf(buf: []u8, prefix: []const u8, is_last: bool, is_root: bool) ![]const u8 {
-        if (is_root) return prefix;
-        return std.fmt.bufPrint(buf, "{s}{s}", .{ prefix, if (is_last) "   " else "│  " });
-    }
-};
 
 pub const Node = struct {
     kind: Kind,
@@ -126,7 +86,7 @@ pub const Node = struct {
     }
 };
 
-pub const Parser = struct {
+const Parser = struct {
     gpa: std.mem.Allocator,
 
     /// externally owned
@@ -147,7 +107,6 @@ pub const Parser = struct {
 
     pub fn deinit(p: *Parser) void {
         p.tmp.deinit(p.gpa);
-        p.errors.deinit(p.gpa);
     }
 
     pub fn parse(p: *Parser) Error!Syntax {
@@ -158,6 +117,7 @@ pub const Parser = struct {
             .tree = p.nodes.toOwnedSlice(),
             .root = root,
             .extra = try p.extra.toOwnedSlice(p.gpa),
+            .errors = try p.errors.toOwnedSlice(p.gpa),
         };
     }
 
@@ -368,7 +328,55 @@ pub const Parser = struct {
         return .eof;
     }
 
-    fn src(p: *Parser) SourceFile.Span {
+    fn src(p: *Parser) Span {
         return p.tokens.items(.pos)[p.pos];
+    }
+};
+
+const report = struct {
+    fn write_node(
+        w: *std.Io.Writer,
+        ast: Syntax,
+        tokens: Token.Slice,
+        buf: []const u8,
+        idx: Node.Index,
+        prefix: []const u8,
+        is_last: bool,
+        is_root: bool,
+    ) !void {
+        const node = ast.tree.get(idx);
+        const connector: []const u8 =
+            if (is_root) "" else if (is_last) "└─" else "├─";
+        try w.print("{s}{s}{s}", .{ prefix, connector, @tagName(node.kind) });
+
+        switch (node.kind) {
+            .builtin, .symbol, .real, .byte, .string, .primitive, .modifier => {
+                const pos = tokens.items(.pos)[node.token];
+                const loc = pos.line_col(buf);
+                try w.print(" \"{s}\" ({d}:{d})\n", .{ pos.slice(buf), loc.line, loc.column });
+            },
+            .assign, .modify => {
+                try w.print("\n", .{});
+
+                var prefix_buf: [512]u8 = undefined;
+                const child_prefix = try child_prefix_buf(&prefix_buf, prefix, is_last, is_root);
+                try write_node(w, ast, tokens, buf, node.lhs, child_prefix, false, false);
+                try write_node(w, ast, tokens, buf, node.rhs, child_prefix, true, false);
+            },
+            .array, .sequence => {
+                const children = ast.extra[node.lhs..node.rhs];
+                try w.print(" [{d}]\n", .{children.len});
+                var prefix_buf: [512]u8 = undefined;
+                const child_prefix = try child_prefix_buf(&prefix_buf, prefix, is_last, is_root);
+                for (children, 0..) |c, i| {
+                    try write_node(w, ast, tokens, buf, c, child_prefix, i == children.len - 1, false);
+                }
+            },
+        }
+    }
+
+    fn child_prefix_buf(buf: []u8, prefix: []const u8, is_last: bool, is_root: bool) ![]const u8 {
+        if (is_root) return prefix;
+        return std.fmt.bufPrint(buf, "{s}{s}", .{ prefix, if (is_last) "   " else "│  " });
     }
 };

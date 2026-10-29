@@ -112,12 +112,9 @@ pub fn main(init: std.process.Init.Minimal) !void {
         defer tokens.deinit(gpa);
 
         std.log.debug("parsing {s}", .{src.path});
-        var parser = Syntax.Parser.init(gpa, tokens);
-        defer parser.deinit();
-
-        var ast = try parser.parse();
+        var ast = try Syntax.parse(gpa, tokens);
         defer ast.deinit(gpa);
-        try report_errors(src, parser.errors.items);
+        try report_errors(src, ast.errors);
 
         if (debug_ast) {
             try ast.dump(stdout, tokens, src.content);

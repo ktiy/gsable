@@ -222,18 +222,15 @@ fn check(src: [:0]const u8, expected: StackEffect, expected_errs: usize) !void {
     var ts = try lex.collect(gpa);
     defer ts.deinit(gpa);
 
-    var p = Syntax.Parser.init(gpa, ts);
-    defer p.deinit();
-
-    var ast = try p.parse();
+    var ast = try Syntax.parse(gpa, ts);
     defer ast.deinit(gpa);
 
-    try std.testing.expectEqual(0, p.errors.items.len);
+    try std.testing.expectEqual(0, ast.errors.len);
 
     var st = try SymTable.init(gpa);
     defer st.deinit();
 
-    const res = try run(gpa, ast, p.tokens, src, &st);
+    const res = try run(gpa, ast, ts, src, &st);
     defer res.deinit(gpa);
 
     try std.testing.expectEqual(expected_errs, res.errors.len);
