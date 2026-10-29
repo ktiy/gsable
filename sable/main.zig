@@ -165,7 +165,7 @@ pub fn main(init: std.process.Init.Minimal) !void {
             try stderr.flush();
         }
 
-        var m = Machine.init(prog);
+        var m = Machine.init(gpa, prog);
         defer m.deinit();
 
         while (m.step()) {}

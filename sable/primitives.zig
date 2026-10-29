@@ -36,6 +36,7 @@ pub fn run(t: Token.Kind) *const fn (m: *sbl.Machine) void {
         .swap => stack.swap,
         .over => stack.over,
         .rot => stack.rot,
+        .iota => @import("prim/iota.zig").run,
         else => nyi.run,
     };
 }

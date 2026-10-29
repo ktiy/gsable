@@ -84,8 +84,8 @@ pub fn into(self: Cell, comptime k: Kind) To(k) {
 
 pub fn format(self: Cell, w: *std.Io.Writer) !void {
     switch (self.k) {
-        .num => try w.print("(real {d})", .{self.into(.num)}),
-        .byte => try w.print("(byte #{x})", .{self.into(.byte)}),
+        .num => try w.print("{d}", .{self.into(.num)}),
+        .byte => try w.print("#{x}", .{self.into(.byte)}),
         .char => {
             const cp: u21 = @truncate(self.into(.char));
             var buf: [4]u8 = undefined;
@@ -95,7 +95,15 @@ pub fn format(self: Cell, w: *std.Io.Writer) !void {
             };
             try w.writeAll(buf[0..len]);
         },
-        .array => try w.print("nyi", .{}),
+        .array => {
+            try w.writeAll("[");
+            var iter = self.into(.array).iter();
+            //TODO: multidimensional arrays
+            while (iter.next()) |v| {
+                try w.print("{f} ", .{v});
+            }
+            try w.writeAll("\x08]");
+        },
         .none => try w.print("(none)", .{}),
     }
 }

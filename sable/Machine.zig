@@ -13,6 +13,7 @@ const ret_stack_size = 256;
 const Dat_P = std.math.IntFittingRange(-1, dat_stack_size);
 const Ret_P = std.math.IntFittingRange(-1, ret_stack_size);
 
+gpa: std.mem.Allocator,
 prog: CompiledProgram,
 dat: [dat_stack_size]Cell = undefined,
 ret: [ret_stack_size]usize = undefined,
@@ -23,8 +24,9 @@ ret_p: Ret_P = 0,
 
 e: Error = .none,
 
-pub fn init(p: CompiledProgram) Machine {
+pub fn init(gpa: std.mem.Allocator, p: CompiledProgram) Machine {
     return .{
+        .gpa = gpa,
         .prog = p,
     };
 }
