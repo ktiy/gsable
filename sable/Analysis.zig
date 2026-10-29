@@ -1,21 +1,19 @@
 //semantic analysis
 const Analysis = @This();
-
 const std = @import("std");
-const Syntax = @import("Syntax.zig");
-const Token = @import("Token.zig");
-const Bytecode = @import("Bytecode.zig");
-const CompileError = @import("CompileError.zig");
-const SymTable = @import("SymbolTable.zig");
-
+const sbl = @import("sbl");
+const CompileError = sbl.CompileError;
 const Node = Syntax.Node;
-const StackEffect = Bytecode.StackEffect;
-const Symbol = SymTable.Symbol;
+const Syntax = sbl.Syntax;
+const Token = sbl.Token;
+const Bytecode = sbl.Bytecode;
+const StackEffect = sbl.Bytecode.StackEffect;
+const SymTable = sbl.SymTable;
+const Symbol = sbl.SymTable.Symbol;
+const E = Error;
+const Self = Analysis;
 
 pub const Error = std.mem.Allocator.Error;
-
-const Self = Analysis;
-const E = Error;
 
 gpa: std.mem.Allocator,
 ast: Syntax,
