@@ -7,6 +7,7 @@ pub const Array = @import("Array.zig");
 pub const ArrayIterator = @import("ArrayIterator.zig");
 pub const Bytecode = @import("Bytecode.zig");
 pub const Cell = @import("Cell.zig");
+pub const Compiler = @import("Compiler.zig");
 pub const CompileError = @import("CompileError.zig");
 pub const Machine = @import("Machine.zig");
 pub const Readline = @import("Readline.zig");
@@ -59,17 +60,17 @@ pub fn main(init: std.process.Init.Minimal) !void {
     for (args[1..]) |arg| {
         if (!std.mem.startsWith(u8, arg, "-")) {
             try files.appendBounded(.{ .path = arg });
-        } else if (std.mem.eql(u8, arg, "-h") or std.mem.eql(u8, arg, "--help")) {
+        } else if (eq(arg, "-h") or eq(arg, "--help")) {
             try stdout.print("{s}", .{usage});
             try stdout.flush();
             std.process.exit(0);
-        } else if (std.mem.eql(u8, arg, "-v") or std.mem.eql(u8, arg, "--version")) {
+        } else if (eq(arg, "-v") or eq(arg, "--version")) {
             try stderr.print("sable v{s}\n", .{build_options.version});
             try stderr.flush();
             std.process.exit(0);
-        } else if (std.mem.eql(u8, arg, "-r") or std.mem.eql(u8, arg, "--repl")) {
+        } else if (eq(arg, "-r") or eq(arg, "--repl")) {
             repl = true;
-        } else if (std.mem.eql(u8, arg, "--parse")) {
+        } else if (eq(arg, "--parse")) {
             debug_ast = true;
         } else {
             try stderr.print("sable: {s}: invalid option\n", .{arg});
@@ -100,7 +101,12 @@ pub fn main(init: std.process.Init.Minimal) !void {
         var lex = Token.Lexer.init(src.content, 0);
         var tokens = lex.collect(gpa) catch |e| {
             const loc = SourceFile.Position.cursor(src.content, lex.pos);
-            std.log.err("{s}: {d}:{d}: {s}", .{ src.path, loc.line, loc.column, @errorName(e) });
+            std.log.err("{s}: {d}:{d}: {s}", .{
+                src.path,
+                loc.line,
+                loc.column,
+                @errorName(e),
+            });
             std.process.exit(1);
         };
         defer tokens.deinit(gpa);
@@ -109,25 +115,45 @@ pub fn main(init: std.process.Init.Minimal) !void {
         var parser = Syntax.Parser.init(gpa, tokens);
         defer parser.deinit();
 
-        const ast = try parser.parse();
-
-        if (parser.errors.items.len > 0) {
-            for (parser.errors.items) |e| {
-                try e.report(stderr, src.*);
-            }
-            try stderr.flush();
-            std.process.exit(1);
-        }
+        var ast = try parser.parse();
+        defer ast.deinit(gpa);
+        try report_errors(src, parser.errors.items);
 
         if (debug_ast) {
             try ast.dump(stdout, tokens, src.content);
             try stdout.flush();
             std.process.exit(0);
         }
+
+        var st = try SymTable.init(gpa);
+        defer st.deinit();
+
+        std.log.debug("analysing {s}", .{src.path});
+        const sema = try Analysis.run(
+            gpa,
+            ast,
+            tokens,
+            src.content,
+            &st,
+        );
+        defer sema.deinit(gpa);
+        try report_errors(src, sema.errors);
     }
     defer for (files.items) |src| {
         gpa.free(src.content);
     };
+}
+
+fn report_errors(src: *SourceFile, es: []CompileError) !void {
+    if (es.len > 0) {
+        for (es) |e| try e.report(stderr, src.*);
+        try stderr.flush();
+        std.process.exit(1);
+    }
+}
+
+fn eq(a: []const u8, b: []const u8) bool {
+    return std.mem.eql(u8, a, b);
 }
 
 test {

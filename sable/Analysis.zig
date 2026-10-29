@@ -14,41 +14,29 @@ const Symbol = SymTable.Symbol;
 
 pub const Error = std.mem.Allocator.Error;
 
+const Self = Analysis;
+const E = Error;
+
 gpa: std.mem.Allocator,
 ast: Syntax,
 ts: Token.Slice,
 buf: []const u8,
 st: *SymTable,
-errs: std.ArrayList(CompileError) = .empty,
+errors: std.ArrayList(CompileError) = .empty,
 /// Node.Index idx
 sigs: []StackEffect,
 /// Symbol idx
 env: std.ArrayList(?StackEffect) = .empty,
 
-pub const Binding = enum {
-    value,
-    function,
-    none,
-};
-
-pub fn classify(e: StackEffect) Binding {
-    if (e.in > 0) return .function;
-    if (e.out == 1) return .value;
-    return .none;
-}
-
 pub const Result = struct {
     sigs: []StackEffect,
-    errs: []CompileError,
+    errors: []CompileError,
 
     pub fn deinit(x: Result, a: std.mem.Allocator) void {
         a.free(x.sigs);
-        a.free(x.errs);
+        a.free(x.errors);
     }
 };
-
-const Self = Analysis;
-const E = Error;
 
 pub fn run(
     gpa: std.mem.Allocator,
@@ -70,7 +58,7 @@ pub fn run(
         .sigs = sigs,
     };
     defer x.env.deinit(gpa);
-    errdefer x.errs.deinit(gpa);
+    errdefer x.errors.deinit(gpa);
 
     const root = ast.tree.get(ast.root);
     var acc = StackEffect.init(0, 0);
@@ -85,8 +73,20 @@ pub fn run(
 
     return .{
         .sigs = sigs,
-        .errs = try x.errs.toOwnedSlice(gpa),
+        .errors = try x.errors.toOwnedSlice(gpa),
     };
+}
+
+pub const Binding = enum {
+    value,
+    function,
+    none,
+};
+
+pub fn classify(e: StackEffect) Binding {
+    if (e.in > 0) return .function;
+    if (e.out == 1) return .value;
+    return .none;
 }
 
 fn resolve(x: *Self, idx: Node.Index) E!StackEffect {
@@ -209,7 +209,7 @@ fn bind(x: *Self, sym: Symbol, e: StackEffect) E!void {
 }
 
 fn err(x: *Self, k: CompileError.Kind, t: Token.Index) E!void {
-    try x.errs.append(x.gpa, .{
+    try x.errors.append(x.gpa, .{
         .kind = k,
         .pos = x.ts.items(.pos)[t],
     });
@@ -237,7 +237,7 @@ fn check(src: [:0]const u8, expected: StackEffect, expected_errs: usize) !void {
     const res = try run(gpa, ast, p.tokens, src, &st);
     defer res.deinit(gpa);
 
-    try std.testing.expectEqual(expected_errs, res.errs.len);
+    try std.testing.expectEqual(expected_errs, res.errors.len);
     const got = res.sigs[ast.root];
     try std.testing.expectEqual(expected.in, got.in);
     try std.testing.expectEqual(expected.out, got.out);
@@ -262,14 +262,14 @@ test "unbound symbol" {
     try check("x", StackEffect.nilad, 1);
 }
 
-test "value binding is evaluated, not deferred" {
+test "evaluate nilad value binding" {
     try check("x ← 1 2 +\nx x +", StackEffect.nilad, 0);
 }
 
-test "multi-value binding is rejected" {
+test "binding to multiple values" {
     try check("f ← 1 2", StackEffect.init(0, 0), 1);
 }
 
-test "avg is a function (1,1), so the call line is a plain value" {
+test "sanity nilad" {
     try check("avg ← .+´~⧻÷\n10‿20‿30‿40 avg", StackEffect.nilad, 0);
 }

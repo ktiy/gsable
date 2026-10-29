@@ -10,6 +10,12 @@ tree: Node.Slice,
 root: Node.Index,
 extra: []Node.Index,
 
+pub fn deinit(ast: *Syntax, gpa: std.mem.Allocator) void {
+    ast.tree.deinit(gpa);
+    gpa.free(ast.extra);
+    ast.root = 0;
+}
+
 pub fn dump(
     ast: Syntax,
     w: *std.Io.Writer,
@@ -123,6 +129,7 @@ pub const Node = struct {
 pub const Parser = struct {
     gpa: std.mem.Allocator,
 
+    /// externally owned
     tokens: Token.Slice,
     pos: Token.Index = 0,
 
@@ -139,10 +146,7 @@ pub const Parser = struct {
     }
 
     pub fn deinit(p: *Parser) void {
-        p.tokens.deinit(p.gpa);
-        p.nodes.deinit(p.gpa);
         p.tmp.deinit(p.gpa);
-        p.extra.deinit(p.gpa);
         p.errors.deinit(p.gpa);
     }
 
