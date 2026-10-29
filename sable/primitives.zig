@@ -28,8 +28,15 @@ pub fn token_from_cp(c: u21) Token.Kind {
 }
 
 pub fn run(t: Token.Kind) *const fn (m: *sbl.Machine) void {
+    const stack = @import("prim/stack.zig");
+    const nyi = @import("prim/nyi.zig");
     return switch (t) {
-        else => @import("prim/nyi.zig").run,
+        .dup => stack.dup,
+        .drop => stack.drop,
+        .swap => stack.swap,
+        .over => stack.over,
+        .rot => stack.rot,
+        else => nyi.run,
     };
 }
 

@@ -13,7 +13,6 @@
 - [ ] Bytecode interpreter
 
 ### Primitives
-- [ ] Basic stack operators
 - [ ] Arithmetic primitives
 
 ### Arrays
@@ -27,6 +26,7 @@
 
 # DONE
 
+- [x] Basic stack operators
 - [x] Bytecode compiling
 - [x] Stack effect resolver
 - [x] Change modifier syntax from prefix to postfix

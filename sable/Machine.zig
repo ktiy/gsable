@@ -40,6 +40,7 @@ pub fn throw(m: *Machine, e: Error.Kind) void {
 pub fn step(m: *Machine) bool {
     if (m.ip >= m.prog.bc.len) return false;
     const op = m.prog.bc[m.ip];
+    const ip = m.ip;
     m.ip += 1;
 
     if (m.e.kind != .none) return false;
@@ -60,12 +61,13 @@ pub fn step(m: *Machine) bool {
         .call_prim => |tok| {
             const prim = primitives.run(tok);
             prim(m);
-            return true;
+            return m.e.kind == .none;
         },
         .call_lam => |idx| {
-            _ = idx;
-            m.throw(.nyi);
-            return false;
+            m.ret[@as(usize, @intCast(m.ret_p))] = ip;
+            m.ret_p += 1;
+            m.ip = m.prog.lambdas[idx];
+            return true;
         },
         .pop_into_sym => |sym| {
             _ = sym;
@@ -78,7 +80,12 @@ pub fn step(m: *Machine) bool {
             return false;
         },
         .ret => {
-            if (m.ret_p != 0) m.throw(.nyi);
+            if (m.ret_p > 0) {
+                m.ret_p -= 1;
+                const ret = m.ret[@as(usize, @intCast(m.ret_p))];
+                m.ip = ret;
+                return true;
+            }
             return false;
         },
     }
