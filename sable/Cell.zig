@@ -100,6 +100,36 @@ pub fn into(self: Cell, comptime k: Kind) To(k) {
     };
 }
 
+pub fn compare(x: Cell, y: Cell) std.math.Order {
+    std.debug.assert(x.atom() and y.atom());
+
+    const k = x.promote(y);
+    return switch (k) {
+        .num => |j| compare_num(
+            x.coerce(j),
+            y.coerce(j),
+        ),
+        .char => |j| std.math.order(
+            x.coerce(j),
+            y.coerce(j),
+        ),
+        .byte => |j| std.math.order(
+            x.coerce(j),
+            y.coerce(j),
+        ),
+        else => unreachable,
+    };
+}
+
+fn compare_num(x: f64, y: f64) std.math.Order {
+    const x_nan = std.math.isNan(x);
+    const y_nan = std.math.isNan(y);
+    if (x_nan and y_nan) return .eq;
+    if (x_nan) return .gt;
+    if (y_nan) return .lt;
+    return std.math.order(x, y);
+}
+
 pub fn coerce(self: Cell, comptime k: Kind) To(k) {
     std.debug.assert(self.atom());
 

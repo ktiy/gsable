@@ -31,6 +31,7 @@ pub const Prim = fn (m: *sbl.Machine) void;
 
 pub fn run(t: Token.Kind) *const Prim {
     const arith = @import("prim/arith.zig");
+    const sort = @import("prim/sort.zig");
     const stack = @import("prim/stack.zig");
     const nyi = @import("prim/nyi.zig");
     return switch (t) {
@@ -39,6 +40,8 @@ pub fn run(t: Token.Kind) *const Prim {
         .swap => stack.swap,
         .over => stack.over,
         .rot => stack.rot,
+        .order_up => sort.up,
+        .order_down => sort.down,
         .add => arith.add,
         .sub => arith.sub,
         .mul => arith.mul,
