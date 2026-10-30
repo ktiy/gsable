@@ -40,6 +40,7 @@ pub fn run(t: Token.Kind) *const Prim {
         .swap => stack.swap,
         .over => stack.over,
         .rot => stack.rot,
+        .length => @import("prim/length.zig").run,
         .order_up => sort.up,
         .order_down => sort.down,
         .add => arith.add,
