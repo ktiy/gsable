@@ -13,10 +13,9 @@
 - [ ] Bytecode interpreter
 
 ### Primitives
-- [ ] Arithmetic primitives
+- [ ] Broadcasting arithmetic primitives
 
 ### Arrays
-- [ ] Simple array representation
 - [ ] Optimized homogenous arrays
 
 # BACKLOG
@@ -26,6 +25,8 @@
 
 # DONE
 
+- [x] Simple array representation
+- [x] Arithmetic primitives
 - [x] Basic stack operators
 - [x] Bytecode compiling
 - [x] Stack effect resolver
