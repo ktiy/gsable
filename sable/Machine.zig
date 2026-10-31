@@ -48,12 +48,12 @@ pub fn step(m: *Machine) bool {
     if (m.e.kind != .none) return false;
     switch (op) {
         .call_val => |cell| {
-            return m.push(cell);
+            m.push(cell);
         },
         .call_arr => |idx| {
             const x = m.prog.arrays[idx];
             x.retain();
-            return m.push(.array(x));
+            m.push(.array(x));
         },
         .call_sym => |sym| {
             _ = sym;
@@ -69,7 +69,6 @@ pub fn step(m: *Machine) bool {
             m.ret[@as(usize, @intCast(m.ret_p))] = ip;
             m.ret_p += 1;
             m.ip = m.prog.lambdas[idx];
-            return true;
         },
         .pop_into_sym => |sym| {
             _ = sym;
@@ -91,13 +90,13 @@ pub fn step(m: *Machine) bool {
             return false;
         },
     }
+    return true;
 }
 
-pub fn push(m: *Machine, x: Cell) bool {
+pub fn push(m: *Machine, x: Cell) void {
     std.debug.assert(m.dat_p < dat_stack_size);
     m.dat[@as(usize, @intCast(m.dat_p))] = x;
     m.dat_p += 1;
-    return true;
 }
 
 pub fn top(m: *Machine) *Cell {

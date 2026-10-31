@@ -111,7 +111,7 @@ fn prim(comptime F: type) P {
             const x = m.pop();
             const a = m.pop();
             const y = apply(F, m, a, x);
-            _ = m.push(y);
+            m.push(y);
         }
     }.run;
 }

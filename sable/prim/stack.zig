@@ -2,7 +2,7 @@ const std = @import("std");
 const sbl = @import("sbl");
 
 pub fn dup(m: *sbl.Machine) void {
-    _ = m.push(m.top().*);
+    m.push(m.top().*);
 }
 
 pub fn drop(m: *sbl.Machine) void {
@@ -21,7 +21,7 @@ pub fn over(m: *sbl.Machine) void {
     std.debug.assert(m.dat_p > 1);
     const dat_p = @as(usize, @intCast(m.dat_p));
     const dat_x = &m.dat[dat_p - 2];
-    _ = m.push(dat_x.*);
+    m.push(dat_x.*);
 }
 
 pub fn rot(m: *sbl.Machine) void {

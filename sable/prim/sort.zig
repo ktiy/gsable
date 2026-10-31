@@ -23,7 +23,7 @@ fn run(m: M, comptime ascend: bool) void {
         E.Nyi => return m.throw(.nyi),
         E.Rank => return m.throw(.rank),
     };
-    _ = m.push(y);
+    m.push(y);
 }
 
 fn order(m: M, xc: T, comptime ascend: bool) E!T {

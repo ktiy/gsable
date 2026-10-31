@@ -4,7 +4,7 @@ const sbl = @import("sbl");
 pub fn run(m: *sbl.Machine) void {
     const xc = m.pop();
     if (xc.atom()) {
-        _ = m.push(.none());
+        m.push(.none());
         return;
     }
 
@@ -20,7 +20,7 @@ pub fn run(m: *sbl.Machine) void {
     }
     xs.release(m.gpa);
 
-    _ = m.push(.array(arr));
+    m.push(.array(arr));
 }
 
 // a x -- a reshape x
@@ -29,7 +29,7 @@ pub fn re(m: *sbl.Machine) void {
     const x = m.pop();
 
     if (a.k == .none) {
-        _ = m.push(a);
+        m.push(a);
         return;
     }
     if (x.k == .none) return m.throw(.rank);
@@ -41,7 +41,7 @@ pub fn re(m: *sbl.Machine) void {
         for (arr.any_slice()[0..u], 0..) |*elem, i|
             elem.* = get_wrap(a, i);
 
-        _ = m.push(.array(arr));
+        m.push(.array(arr));
         return;
     }
 
@@ -65,7 +65,7 @@ pub fn re(m: *sbl.Machine) void {
         elem.* = get_wrap(a, i);
     }
 
-    _ = m.push(.array(arr));
+    m.push(.array(arr));
 
     xs.release(m.gpa);
     if (!a.atom()) a.into(.array).release(m.gpa);
