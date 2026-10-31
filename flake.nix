@@ -16,6 +16,7 @@
         devShells.default = pkgs.mkShell rec {
           buildInputs = with pkgs; [
             zig
+            zls
             zola
 
             libGL
