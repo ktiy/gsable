@@ -11,7 +11,7 @@ pub fn run(m: *sbl.Machine) void {
     };
 }
 
-// a x -- a[]
+// a x -- a[x]
 fn run_e(m: *sbl.Machine) !void {
     const x = m.pop();
     const a = m.top();
