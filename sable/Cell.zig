@@ -15,7 +15,7 @@ pub const Kind = enum(u8) {
     none,
 
     pub fn atom(k: Kind) bool {
-        return k != .array and k != .none;
+        return k != .array;
     }
     pub fn promote(a: Kind, x: Kind) Kind {
         std.debug.assert(a.atom() and x.atom());

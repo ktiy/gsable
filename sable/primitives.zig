@@ -32,6 +32,7 @@ pub const Prim = fn (m: *sbl.Machine) void;
 pub fn run(t: Token.Kind) *const Prim {
     const arith = @import("prim/arith.zig");
     const sort = @import("prim/sort.zig");
+    const shape = @import("prim/shape.zig");
     const stack = @import("prim/stack.zig");
     const nyi = @import("prim/nyi.zig");
     return switch (t) {
@@ -40,7 +41,11 @@ pub fn run(t: Token.Kind) *const Prim {
         .swap => stack.swap,
         .over => stack.over,
         .rot => stack.rot,
+        .iota => @import("prim/iota.zig").run,
         .length => @import("prim/length.zig").run,
+        .peek => @import("prim/peek.zig").run,
+        .shape => shape.run,
+        .reshape => shape.re,
         .order_up => sort.up,
         .order_down => sort.down,
         .add => arith.add,
@@ -49,7 +54,6 @@ pub fn run(t: Token.Kind) *const Prim {
         .div => arith.div,
         .pow => arith.pow,
         .mod => arith.mod,
-        .iota => @import("prim/iota.zig").run,
         else => nyi.run,
     };
 }
