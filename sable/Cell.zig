@@ -171,8 +171,13 @@ pub fn format(self: Cell, w: *std.Io.Writer) !void {
         },
         .array => {
             try w.writeAll("[");
-            var iter = self.into(.array).iter();
             //TODO: multidimensional arrays
+            const arr = self.into(.array);
+            if (arr.header.rank != 1) {
+                try w.writeAll("...]");
+                return;
+            }
+            var iter = self.into(.array).iter();
             while (iter.next()) |v| {
                 try w.print("{f} ", .{v});
             }
