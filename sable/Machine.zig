@@ -1,28 +1,12 @@
-const Machine = @This();
-
-const std = @import("std");
-const Bytecode = @import("Bytecode.zig");
-const Cell = @import("Cell.zig");
-const CompiledProgram = Bytecode.Program;
-const Error = @import("RuntimeError.zig");
-const primitives = @import("primitives.zig");
-
-const dat_stack_size = 256;
-const ret_stack_size = 256;
-
-const Dat_P = std.math.IntFittingRange(-1, dat_stack_size);
-const Ret_P = std.math.IntFittingRange(-1, ret_stack_size);
-
 gpa: std.mem.Allocator,
 prog: CompiledProgram,
 dat: [dat_stack_size]Cell = undefined,
 ret: [ret_stack_size]usize = undefined,
-
 ip: usize = 0,
 dat_p: Dat_P = 0,
 ret_p: Ret_P = 0,
-
 e: Error = .none,
+mem: std.AutoHashMapUnmanaged(Symbol, Cell) = .empty,
 
 pub fn init(gpa: std.mem.Allocator, p: CompiledProgram) Machine {
     return .{
@@ -32,7 +16,12 @@ pub fn init(gpa: std.mem.Allocator, p: CompiledProgram) Machine {
 }
 
 pub fn deinit(m: *Machine) void {
-    _ = m;
+    var it = m.mem.iterator();
+    while (it.next()) |ent| {
+        const val = ent.value_ptr;
+        if (!val.atom()) val.into(.array).release(m.gpa);
+    }
+    m.mem.deinit(m.gpa);
 }
 
 pub fn throw(m: *Machine, e: Error.Kind) void {
@@ -56,12 +45,12 @@ pub fn step(m: *Machine) bool {
             m.push(.array(x));
         },
         .call_sym => |sym| {
-            _ = sym;
-            m.throw(.nyi);
-            return false;
+            const x = m.mem.get(sym).?;
+            if (!x.atom()) x.into(.array).retain();
+            m.push(x);
         },
         .call_prim => |tok| {
-            const prim = primitives.run(tok);
+            const prim = sbl.primitives.run(tok);
             prim(m);
             return m.e.kind == .none;
         },
@@ -71,14 +60,25 @@ pub fn step(m: *Machine) bool {
             m.ip = m.prog.lambdas[idx];
         },
         .pop_into_sym => |sym| {
-            _ = sym;
-            m.throw(.nyi);
-            return false;
+            m.mem.put(m.gpa, sym, m.pop()) catch {
+                m.throw(.oom);
+                return false;
+            };
         },
         .pop_into_arr => |num| {
-            _ = num;
-            m.throw(.nyi);
-            return false;
+            const arr = sbl.Array.init(m.gpa, &.{@intCast(num)}, .any) catch {
+                m.throw(.oom);
+                return false;
+            };
+
+            const slice = arr.any_slice();
+            for (0..num) |j| {
+                const i = num - 1 - j;
+                slice[i] = m.pop();
+            }
+
+            m.push(.array(arr));
+            return true;
         },
         .ret => {
             if (m.ret_p > 0) {
@@ -110,3 +110,17 @@ pub fn pop(m: *Machine) Cell {
     m.dat_p -= 1;
     return m.dat[@as(usize, @intCast(m.dat_p))];
 }
+
+const Machine = @This();
+
+const dat_stack_size = 256;
+const ret_stack_size = 256;
+const Dat_P = std.math.IntFittingRange(-1, dat_stack_size);
+const Ret_P = std.math.IntFittingRange(-1, ret_stack_size);
+
+const std = @import("std");
+const sbl = @import("sbl");
+const Cell = sbl.Cell;
+const CompiledProgram = sbl.Bytecode.Program;
+const Error = sbl.RuntimeError;
+const Symbol = sbl.SymTable.Symbol;
