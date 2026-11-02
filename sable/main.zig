@@ -22,7 +22,7 @@ pub const primitives = @import("primitives.zig");
 pub const max_open_files = 256;
 
 const usage: []const u8 =
-    \\usage: sable [options] [input-file...]
+    \\usage: sbl [options] [input-file...]
     \\
     \\   -h, --help         Print this help message and exit.
     \\   -v, --version      Print the version number and exit.
