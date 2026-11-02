@@ -31,7 +31,6 @@ pub fn throw(m: *Machine, e: sbl.RuntimeError.Kind) void {
 pub fn step(m: *Machine) bool {
     if (m.ip >= m.prog.bc.len) return false;
     const op = m.prog.bc[m.ip];
-    const ip = m.ip;
     m.ip += 1;
 
     if (m.e.kind != .none) return false;
@@ -55,7 +54,7 @@ pub fn step(m: *Machine) bool {
             return m.e.kind == .none;
         },
         .call_lam => |idx| {
-            m.ret[@as(usize, @intCast(m.ret_p))] = ip;
+            m.ret[@as(usize, @intCast(m.ret_p))] = m.ip;
             m.ret_p += 1;
             m.ip = m.prog.lambdas[idx];
         },
