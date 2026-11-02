@@ -1,13 +1,10 @@
 # TODO
 
-## Syntax
-- [ ] Multi-dimension array syntax
+- [ ] Repl
 
 ## Compiler
 - [ ] Review semantic analysis
-- [ ] Compiling modifiers
 - [ ] Compiling builtins
-- [ ] Fancier error reporting
 
 ## Interpreter/runtime
 - [ ] Bytecode interpreter
@@ -20,11 +17,13 @@
 
 # BACKLOG
 
-- [ ] Repl
+- [ ] Fancier error reporting
+- [ ] Multi-dimension array syntax
 - [ ] Documentation
 
 # DONE
 
+- [x] Compiling modifiers
 - [x] Simple array representation
 - [x] Arithmetic primitives
 - [x] Basic stack operators
