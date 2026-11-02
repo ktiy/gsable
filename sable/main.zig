@@ -5,7 +5,6 @@ const build_options = @import("build_options");
 pub const Analysis = @import("Analysis.zig");
 pub const Array = @import("Array.zig");
 pub const ArrayIterator = @import("ArrayIterator.zig");
-pub const Bytecode = @import("Bytecode.zig");
 pub const Cell = @import("Cell.zig");
 pub const Compiler = @import("Compiler.zig");
 pub const CompileError = @import("CompileError.zig");
@@ -17,6 +16,7 @@ pub const SourceFile = @import("SourceFile.zig");
 pub const SymTable = @import("SymbolTable.zig");
 pub const Syntax = @import("Syntax.zig");
 pub const Token = @import("Token.zig");
+pub const bc = @import("bc.zig");
 pub const primitives = @import("primitives.zig");
 
 pub const max_open_files = 256;
@@ -176,9 +176,13 @@ pub fn main(init: std.process.Init.Minimal) !void {
         }
 
         if (m.dat_p > 1) {
-            while (m.dat_p > 0) std.log.info("{d}: {f}", .{ m.dat_p, m.pop() });
+            while (m.dat_p > 0) {
+                std.log.info("{d}: {f}", .{ m.dat_p, m.pop() });
+            }
         } else if (m.dat_p > 0) {
-            while (m.dat_p > 0) std.log.info("{f}", .{m.pop()});
+            while (m.dat_p > 0) {
+                std.log.info("{f}", .{m.pop()});
+            }
         }
 
         std.process.exit(0);

@@ -1,18 +1,10 @@
-pub const Readline = @This();
-
-const std = @import("std");
-const sbl = @import("sbl");
-const Repl = sbl.Repl;
-const linux = std.os.linux; // todo: support for other os
-const posix = std.posix;
-
-pub const line_size = 4096;
-
 in: posix.fd_t = std.posix.STDIN_FILENO,
 out: posix.fd_t = std.posix.STDOUT_FILENO,
 
 buf: [line_size]u8 = undefined,
 len: usize = 0,
+
+pub const line_size = 4096;
 
 pub fn read_line(self: *Readline, prompt: []const u8) ![]const u8 {
     self.len = 0;
@@ -123,8 +115,15 @@ fn raw_mode(self: *Readline) !posix.termios {
     raw.lflag.ICANON = false;
     raw.lflag.ISIG = false;
     raw.iflag.ICRNL = false;
-    raw.cc[@intFromEnum(posix.V.MIN)] = 1;
-    raw.cc[@intFromEnum(posix.V.TIME)] = 0;
+    raw.cc[@backingInt(posix.V.MIN)] = 1;
+    raw.cc[@backingInt(posix.V.TIME)] = 0;
     try posix.tcsetattr(self.in, .FLUSH, raw);
     return old;
 }
+
+pub const Readline = @This();
+const std = @import("std");
+const sbl = @import("sbl");
+const Repl = sbl.Repl;
+const linux = std.os.linux; // todo: support for other os
+const posix = std.posix;

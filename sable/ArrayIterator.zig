@@ -1,18 +1,14 @@
-const ArrayIterator = @This();
-const Array = @import("Array.zig");
-const Cell = @import("Cell.zig");
-
-ptr: Array,
+ptr: sbl.Array,
 pos: usize,
 
-pub fn init(ptr: Array) ArrayIterator {
+pub fn init(ptr: sbl.Array) ArrayIterator {
     return .{
         .ptr = ptr,
         .pos = 0,
     };
 }
 
-pub fn next(self: *ArrayIterator) ?Cell {
+pub fn next(self: *ArrayIterator) ?sbl.Cell {
     if (self.pos >= self.ptr.header.len) return null;
     defer self.pos += 1;
 
@@ -23,3 +19,6 @@ pub fn next(self: *ArrayIterator) ?Cell {
 
     unreachable;
 }
+
+const ArrayIterator = @This();
+const sbl = @import("sbl");

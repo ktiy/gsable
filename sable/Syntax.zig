@@ -1,12 +1,3 @@
-const Syntax = @This();
-
-const sbl = @import("sbl");
-const std = @import("std");
-const Token = sbl.Token;
-const Span = sbl.SourceFile.Span;
-const CompileError = sbl.CompileError;
-const prim = sbl.primitives;
-
 tree: Node.Slice,
 root: Node.Index,
 extra: []Node.Index,
@@ -380,3 +371,11 @@ const report = struct {
         return std.fmt.bufPrint(buf, "{s}{s}", .{ prefix, if (is_last) "   " else "│  " });
     }
 };
+
+const Syntax = @This();
+const sbl = @import("sbl");
+const std = @import("std");
+const Token = sbl.Token;
+const Span = sbl.SourceFile.Span;
+const CompileError = sbl.CompileError;
+const prim = sbl.primitives;

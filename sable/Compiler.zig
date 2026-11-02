@@ -1,15 +1,3 @@
-const Compiler = @This();
-const std = @import("std");
-const sbl = @import("sbl");
-const Cell = sbl.Cell;
-const Inst = sbl.Bytecode.Inst;
-const Node = sbl.Syntax.Node;
-const Span = sbl.SourceFile.Span;
-const StackEffect = sbl.Bytecode.StackEffect;
-const Symbol = sbl.SymTable.Symbol;
-
-pub const Env = std.ArrayList(?Def);
-
 gpa: std.mem.Allocator,
 
 buf: []const u8,
@@ -27,6 +15,8 @@ arrs: std.ArrayList(sbl.Array) = .empty,
 errs: std.ArrayList(sbl.CompileError) = .empty,
 
 code: Code = .{},
+
+pub const Env = std.ArrayList(?Def);
 
 pub const Code = struct {
     bc: std.ArrayList(Inst) = .empty,
@@ -56,7 +46,7 @@ pub fn run(
     env: *Env,
     lam_base: usize,
     arr_base: usize,
-) E!sbl.Bytecode.Program {
+) E!sbl.bc.Program {
     var w = Compiler{
         .gpa = gpa,
         .ast = ast,
@@ -318,13 +308,13 @@ fn invalid(w: *Compiler, t: sbl.Token.Index) Error!?Cell {
     return null;
 }
 
-fn emit(w: *Compiler, inst: sbl.Bytecode.Inst, n: Node.Index) !void {
+fn emit(w: *Compiler, inst: sbl.bc.Inst, n: Node.Index) !void {
     const t: Span = w.ts.items(.pos)[w.node(.token, n)];
     const u: Span = w.ts.items(.pos)[w.node(.token_end, n)];
     try w.emit_p(inst, Span.span(t.start, u.end));
 }
 
-fn emit_p(w: *Compiler, inst: sbl.Bytecode.Inst, p: Span) !void {
+fn emit_p(w: *Compiler, inst: sbl.bc.Inst, p: Span) !void {
     try w.code.bc.append(w.gpa, inst);
     try w.code.loc.append(w.gpa, p);
 }
@@ -360,14 +350,14 @@ fn intern(w: *Compiler, s: []const u8) E!Symbol {
 }
 
 fn lookup(w: *Compiler, s: Symbol) ?Def {
-    const i: usize = @intFromEnum(s);
+    const i: usize = @backingInt(s);
     if (i >= w.env.items.len) return null;
     return w.env.items[i];
 }
 
 fn bind(w: *Compiler, s: Symbol, d: Def) E!void {
     std.debug.assert(s != .none);
-    const i: usize = @intFromEnum(s);
+    const i: usize = @backingInt(s);
     if (i >= w.env.items.len)
         try w.env.appendNTimes(w.gpa, null, i + 1 - w.env.items.len);
     w.env.items[i] = d;
@@ -391,3 +381,13 @@ fn lambda(w: *Compiler, body: Node.Index) E!usize {
 
     return w.lam_base + idx;
 }
+
+const Compiler = @This();
+const std = @import("std");
+const sbl = @import("sbl");
+const Cell = sbl.Cell;
+const Inst = sbl.bc.Inst;
+const Node = sbl.Syntax.Node;
+const Span = sbl.SourceFile.Span;
+const StackEffect = sbl.bc.StackEffect;
+const Symbol = sbl.SymTable.Symbol;

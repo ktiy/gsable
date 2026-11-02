@@ -1,30 +1,6 @@
-const Array = @This();
-
-const std = @import("std");
-const assert = std.debug.assert;
-
-const sbl = @import("sbl");
-const Cell = sbl.Cell;
-
 header: *Header,
 
 pub const Dim = i64;
-
-pub const Kind = enum(u8) {
-    any,
-
-    pub fn Type(comptime self: Kind) Type {
-        return switch (self) {
-            .any => Cell,
-        };
-    }
-
-    pub fn array_size(self: Kind, len: u64) usize {
-        return switch (self) {
-            .any => len * @sizeOf(Cell),
-        };
-    }
-};
 
 pub const Header = extern struct {
     kind: Kind = .any,
@@ -47,29 +23,6 @@ pub const Header = extern struct {
             .len = self.len,
             .ptr = ptr,
         };
-    }
-};
-
-pub const Payload = struct {
-    rank: usize,
-    len: usize,
-    ptr: [*]u8,
-
-    pub fn shape(self: Payload) []Dim {
-        return self.shape_ptr()[0..self.rank];
-    }
-
-    pub fn data(self: Payload, comptime T: type) []T {
-        const base: [*]T = @ptrCast(@alignCast(self.data_ptr()));
-        return base[0..self.len];
-    }
-
-    pub fn shape_ptr(self: Payload) [*]Dim {
-        return @ptrCast(@alignCast(self.ptr));
-    }
-
-    pub fn data_ptr(self: Payload) [*]u8 {
-        return self.ptr + (self.rank * @sizeOf(Dim));
     }
 };
 
@@ -193,10 +146,10 @@ pub fn is_any(self: Array) bool {
     return self.header.kind == .any;
 }
 
-fn total_size(kind: Kind, rank: u8, len: u64) usize {
+fn total_size(k: Kind, rank: u8, len: u64) usize {
     const header_size = @sizeOf(Header);
     const shape_size = @as(usize, rank) * @sizeOf(Dim);
-    const array_size = kind.array_size(len);
+    const array_size = k.array_size(len);
     return header_size + shape_size + array_size;
 }
 
@@ -204,9 +157,64 @@ pub fn payload(self: Array) Payload {
     return self.header.payload();
 }
 
+pub fn ty(self: Array) Kind {
+    return self.header.kind;
+}
+
+pub fn ra(self: Array) u8 {
+    return self.header.rank;
+}
+
+pub fn refc(self: Array) u16 {
+    return self.header.refc;
+}
+
+pub fn count(self: Array) u64 {
+    return self.header.len;
+}
+
 pub fn shape(self: Array) []i64 {
     return self.payload().shape();
 }
+
+pub const Kind = enum(u8) {
+    any,
+
+    pub fn Type(comptime self: Kind) Type {
+        return switch (self) {
+            .any => Cell,
+        };
+    }
+
+    pub fn array_size(self: Kind, len: u64) usize {
+        return switch (self) {
+            .any => len * @sizeOf(Cell),
+        };
+    }
+};
+
+pub const Payload = struct {
+    rank: usize,
+    len: usize,
+    ptr: [*]u8,
+
+    pub fn shape(self: Payload) []Dim {
+        return self.shape_ptr()[0..self.rank];
+    }
+
+    pub fn data(self: Payload, comptime T: type) []T {
+        const base: [*]T = @ptrCast(@alignCast(self.data_ptr()));
+        return base[0..self.len];
+    }
+
+    pub fn shape_ptr(self: Payload) [*]Dim {
+        return @ptrCast(@alignCast(self.ptr));
+    }
+
+    pub fn data_ptr(self: Payload) [*]u8 {
+        return self.ptr + (self.rank * @sizeOf(Dim));
+    }
+};
 
 test "array release" {
     const gpa = std.testing.allocator;
@@ -281,3 +289,9 @@ test "array cow" {
     y1.release(gpa);
     y2.release(gpa);
 }
+
+const Array = @This();
+const std = @import("std");
+const sbl = @import("sbl");
+const assert = std.debug.assert;
+const Cell = sbl.Cell;

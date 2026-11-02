@@ -1,9 +1,3 @@
-const Cell = @This();
-const Array = @import("Array.zig");
-
-const std = @import("std");
-const builtin = @import("builtin");
-
 k: Kind,
 x: Data,
 
@@ -17,6 +11,7 @@ pub const Kind = enum(u8) {
     pub fn atom(k: Kind) bool {
         return k != .array;
     }
+
     pub fn promote(a: Kind, x: Kind) Kind {
         std.debug.assert(a.atom() and x.atom());
         if (a == .char or x == .char) return .char;
@@ -186,3 +181,10 @@ pub fn format(self: Cell, w: *std.Io.Writer) !void {
         .none => try w.print("(none)", .{}),
     }
 }
+
+const Cell = @This();
+
+const std = @import("std");
+const sbl = @import("sbl");
+const builtin = @import("builtin");
+const Array = sbl.Array;

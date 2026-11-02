@@ -1,29 +1,12 @@
-//semantic analysis
-const Analysis = @This();
-const std = @import("std");
-const sbl = @import("sbl");
-const CompileError = sbl.CompileError;
-const Node = Syntax.Node;
-const Syntax = sbl.Syntax;
-const Token = sbl.Token;
-const Bytecode = sbl.Bytecode;
-const StackEffect = sbl.Bytecode.StackEffect;
-const SymTable = sbl.SymTable;
-const Symbol = sbl.SymTable.Symbol;
-const E = Error;
-const Self = Analysis;
-
-pub const Error = std.mem.Allocator.Error;
-
 gpa: std.mem.Allocator,
 ast: Syntax,
 ts: Token.Slice,
 buf: []const u8,
 st: *SymTable,
 errors: std.ArrayList(CompileError) = .empty,
-/// Node.Index idx
+/// [idx: Node.Index]
 sigs: []StackEffect,
-/// Symbol idx
+/// [idx: Symbol]
 env: std.ArrayList(?StackEffect) = .empty,
 
 pub const Result = struct {
@@ -35,6 +18,11 @@ pub const Result = struct {
         a.free(x.errors);
     }
 };
+
+pub const Error = std.mem.Allocator.Error;
+
+const Self = Analysis;
+const E = Error;
 
 pub fn run(
     gpa: std.mem.Allocator,
@@ -193,13 +181,13 @@ fn intern(x: *Self, t: Token.Index) E!Symbol {
 }
 
 fn lookup(x: *Self, sym: Symbol) ?StackEffect {
-    const i: usize = @intFromEnum(sym);
+    const i: usize = @backingInt(sym);
     if (i >= x.env.items.len) return null;
     return x.env.items[i];
 }
 
 fn bind(x: *Self, sym: Symbol, e: StackEffect) E!void {
-    const i: usize = @intFromEnum(sym);
+    const i: usize = @backingInt(sym);
     if (i >= x.env.items.len) {
         try x.env.appendNTimes(x.gpa, null, i + 1 - x.env.items.len);
     }
@@ -267,3 +255,15 @@ test "binding to multiple values" {
 test "sanity nilad" {
     try check("avg ← .+´~⧻÷\n10‿20‿30‿40 avg", StackEffect.nilad, 0);
 }
+
+const Analysis = @This();
+const std = @import("std");
+const sbl = @import("sbl");
+const CompileError = sbl.CompileError;
+const Node = Syntax.Node;
+const Syntax = sbl.Syntax;
+const Token = sbl.Token;
+const bc = sbl.bc;
+const StackEffect = sbl.bc.StackEffect;
+const SymTable = sbl.SymTable;
+const Symbol = sbl.SymTable.Symbol;

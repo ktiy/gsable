@@ -1,9 +1,3 @@
-const Repl = @This();
-
-const std = @import("std");
-const sbl = @import("sbl");
-const Readline = sbl.Readline;
-
 r: Readline,
 
 const prefix = "sbl0.0$ ";
@@ -81,3 +75,9 @@ fn help(self: *Repl, str: []const u8) void {
     }
     self.r.write_bytes("\r\n\r\n");
 }
+
+const Repl = @This();
+
+const std = @import("std");
+const sbl = @import("sbl");
+const Readline = sbl.Readline;

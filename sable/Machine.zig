@@ -1,14 +1,14 @@
 gpa: std.mem.Allocator,
-prog: CompiledProgram,
+prog: sbl.bc.Program,
 dat: [dat_stack_size]Cell = undefined,
 ret: [ret_stack_size]usize = undefined,
 ip: usize = 0,
 dat_p: Dat_P = 0,
 ret_p: Ret_P = 0,
-e: Error = .none,
+e: sbl.RuntimeError = .none,
 mem: std.AutoHashMapUnmanaged(Symbol, Cell) = .empty,
 
-pub fn init(gpa: std.mem.Allocator, p: CompiledProgram) Machine {
+pub fn init(gpa: std.mem.Allocator, p: sbl.bc.Program) Machine {
     return .{
         .gpa = gpa,
         .prog = p,
@@ -24,7 +24,7 @@ pub fn deinit(m: *Machine) void {
     m.mem.deinit(m.gpa);
 }
 
-pub fn throw(m: *Machine, e: Error.Kind) void {
+pub fn throw(m: *Machine, e: sbl.RuntimeError.Kind) void {
     m.e = .{ .kind = e };
 }
 
@@ -70,7 +70,6 @@ pub fn step(m: *Machine) bool {
                 m.throw(.oom);
                 return false;
             };
-
             const slice = arr.any_slice();
             for (0..num) |j| {
                 const i = num - 1 - j;
@@ -78,16 +77,14 @@ pub fn step(m: *Machine) bool {
             }
 
             m.push(.array(arr));
-            return true;
         },
         .ret => {
-            if (m.ret_p > 0) {
-                m.ret_p -= 1;
-                const ret = m.ret[@as(usize, @intCast(m.ret_p))];
-                m.ip = ret;
-                return true;
+            if (m.ret_p <= 0) {
+                return false;
             }
-            return false;
+            m.ret_p -= 1;
+            const ret = m.ret[@as(usize, @intCast(m.ret_p))];
+            m.ip = ret;
         },
     }
     return true;
@@ -121,6 +118,4 @@ const Ret_P = std.math.IntFittingRange(-1, ret_stack_size);
 const std = @import("std");
 const sbl = @import("sbl");
 const Cell = sbl.Cell;
-const CompiledProgram = sbl.Bytecode.Program;
-const Error = sbl.RuntimeError;
 const Symbol = sbl.SymTable.Symbol;

@@ -1,5 +1,3 @@
-const Self = @This();
-
 path: []const u8,
 content: [:0]const u8 = undefined,
 
@@ -86,6 +84,6 @@ fn decode(buf: []const u8) struct { u3, u21 } {
     return .{ len, cp };
 }
 
-const sbl = @import("sbl");
-
+const Self = @This();
 const std = @import("std");
+const sbl = @import("sbl");

@@ -1,9 +1,5 @@
-/// Strings are externally owned
-const SymTable = @This();
-
-const std = @import("std");
-
 gpa: std.mem.Allocator,
+/// Strings are externally owned
 pool: std.array_hash_map.String(void),
 
 pub const Symbol = enum(u32) {
@@ -26,12 +22,12 @@ pub fn deinit(self: *SymTable) void {
 pub fn intern(self: *SymTable, id: []const u8) !Symbol {
     if (id.len == 0) return .none;
     const elem = try self.pool.getOrPut(self.gpa, id);
-    return @enumFromInt(elem.index);
+    return @fromBackingInt(@intCast(elem.index));
 }
 
 pub fn get(self: *SymTable, sym: Symbol) []const u8 {
     if (sym == .none) return "";
-    return self.pool.keys()[@intFromEnum(sym)];
+    return self.pool.keys()[@backingInt(sym)];
 }
 
 test "symbol table" {
@@ -50,3 +46,6 @@ test "symbol table" {
     try std.testing.expectEqualSlices(u8, hello_str, hello2_str);
     try std.testing.expectEqualSlices(u8, "hello", hello_str);
 }
+
+const SymTable = @This();
+const std = @import("std");

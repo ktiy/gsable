@@ -1,16 +1,6 @@
-const Bytecode = @This();
-const std = @import("std");
-const sbl = @import("sbl");
-const Array = sbl.Array;
-const Cell = sbl.Cell;
-const CompileError = sbl.CompileError;
-const Token = sbl.Token;
-const SourceFile = sbl.SourceFile;
-const Symbol = sbl.SymTable.Symbol;
-
 pub const Program = struct {
     bc: []const Inst = undefined,
-    loc: []const SourceFile.Span = undefined,
+    loc: []const Span = undefined,
     arrays: []const Array = undefined,
     lambdas: []const usize = undefined,
     errors: []const CompileError,
@@ -77,3 +67,12 @@ pub const StackEffect = struct {
         return .init(x.in + yn, x.out - xh + y.out);
     }
 };
+
+const std = @import("std");
+const sbl = @import("sbl");
+const Array = sbl.Array;
+const Cell = sbl.Cell;
+const CompileError = sbl.CompileError;
+const Token = sbl.Token;
+const Span = sbl.SourceFile.Span;
+const Symbol = sbl.SymTable.Symbol;

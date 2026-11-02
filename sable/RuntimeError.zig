@@ -1,6 +1,3 @@
-const RuntimeError = @This();
-const std = @import("std");
-
 kind: Kind,
 i: SourceIndex = .none,
 
@@ -34,3 +31,6 @@ pub fn report(self: RuntimeError, w: *std.Io.Writer, buf: []const u8) !void {
     try w.writeByte('\n');
     try w.flush();
 }
+
+const RuntimeError = @This();
+const std = @import("std");

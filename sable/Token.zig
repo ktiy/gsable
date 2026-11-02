@@ -1,8 +1,3 @@
-const Token = @This();
-
-const SourceFile = @import("SourceFile.zig");
-const primitives = @import("primitives.zig");
-
 kind: Kind,
 pos: SourceFile.Span,
 
@@ -416,5 +411,9 @@ test "invalid utf-8" {
     try std.testing.expectEqual(1, lex.pos);
 }
 
-const utf = std.unicode;
+const Token = @This();
 const std = @import("std");
+const sbl = @import("sbl");
+const utf = std.unicode;
+const primitives = sbl.primitives;
+const SourceFile = sbl.SourceFile;
