@@ -46,6 +46,7 @@ pub const Kind = enum(u8) {
 
     // modifiers
     fold,
+    scan,
 
     comment,
     comment_line,

@@ -23,6 +23,7 @@ pub fn token_from_cp(c: u21) Token.Kind {
         '*' => .pow,
         '|' => .mod,
         '´' => .fold,
+        '`' => .scan,
         else => .unknown,
     };
 }
@@ -62,17 +63,21 @@ pub fn run(t: Token.Kind) *const Prim {
 pub fn mod(t: Token.Kind) *const Mod {
     return switch (t) {
         .fold => @import("mod/fold.zig").run,
+        .scan => @import("mod/scan.zig").run,
         else => unreachable,
     };
 }
 
 pub fn is_prim(k: Token.Kind) bool {
-    const i: u8 = @intFromEnum(Token.Kind.dup);
-    const j: u8 = @intFromEnum(Token.Kind.mod);
-    const x: u8 = @intFromEnum(k);
+    const i: u8 = @backingInt(Token.Kind.dup);
+    const j: u8 = @backingInt(Token.Kind.mod);
+    const x: u8 = @backingInt(k);
     return x >= i and x <= j;
 }
 
 pub fn is_mod(k: Token.Kind) bool {
-    return k == .fold;
+    const i: u8 = @backingInt(Token.Kind.fold);
+    const j: u8 = @backingInt(Token.Kind.scan);
+    const x: u8 = @backingInt(k);
+    return x >= i and x <= j;
 }

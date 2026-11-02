@@ -169,6 +169,12 @@ fn modify(x: *Self, node: Node) E!StackEffect {
             }
             return StackEffect.monad;
         },
+        .scan => { // : dyad -> monad
+            if (operand.in != 2 or operand.out != 1) {
+                try x.err(.bad_modifier_operand, mod_tok);
+            }
+            return StackEffect.monad;
+        },
         else => {
             try x.err(.nyi, mod_tok);
             return operand;
