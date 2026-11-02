@@ -14,6 +14,7 @@ pub const Kind = enum {
     invalid_binding,
     invalid_token,
     stack_underflow,
+    unbound_builtin,
     unbound_symbol,
 
     pub fn message(kind: Kind) []const u8 {
@@ -28,6 +29,7 @@ pub const Kind = enum {
             .invalid_token => "invalid token",
             .invalid_binding => "invalid binding",
             .stack_underflow => "stack underflow",
+            .unbound_builtin => "unbound builtin",
             .unbound_symbol => "unbound symbol",
         };
     }

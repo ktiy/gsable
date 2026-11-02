@@ -17,6 +17,7 @@ pub const SymTable = @import("SymbolTable.zig");
 pub const Syntax = @import("Syntax.zig");
 pub const Token = @import("Token.zig");
 pub const bc = @import("bc.zig");
+pub const builtins = @import("builtins.zig");
 pub const primitives = @import("primitives.zig");
 
 pub const max_open_files = 256;

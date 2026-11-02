@@ -182,7 +182,11 @@ fn expr(w: *Compiler, n: Node.Index) E!void {
             for (w.ast.extra[lhs..rhs]) |m| try w.expr(m);
         },
 
-        .builtin => try w.fail(.nyi, n),
+        .builtin => {
+            const buf = w.str(w.node(.token, n))[1..];
+            const builtin = sbl.builtins.map.get(buf) orelse unreachable;
+            try w.emit(.{ .call_builtin = builtin }, n);
+        },
     }
 }
 

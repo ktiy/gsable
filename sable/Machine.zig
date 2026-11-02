@@ -35,6 +35,9 @@ pub fn step(m: *Machine) bool {
 
     if (m.e.kind != .none) return false;
     switch (op) {
+        .call_builtin => |id| {
+            sbl.builtins.run(m, id);
+        },
         .call_val => |cell| {
             m.push(cell);
         },

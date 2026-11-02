@@ -250,7 +250,7 @@ const Parser = struct {
         return .node(.array, open, close, body.lhs, body.rhs);
     }
 
-    fn parse_atom(p: *Parser) ?Node {
+    fn parse_atom(p: *Parser) Error!?Node {
         const k = p.kind();
         return switch (k) {
             .builtin => .init(.builtin, p.incr()),

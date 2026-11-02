@@ -20,6 +20,7 @@ pub const Program = struct {
 };
 
 pub const Inst = union(enum) {
+    call_builtin: sbl.builtins.Builtin,
     call_val: Cell,
     call_arr: usize,
     call_sym: Symbol,
@@ -32,6 +33,7 @@ pub const Inst = union(enum) {
 
     pub fn format(self: Inst, w: *std.Io.Writer) !void {
         switch (self) {
+            .call_builtin => |x| try w.print("CALL @{s}", .{@tagName(x)}),
             .call_val => |x| try w.print("PUSH {f}", .{x}),
             .call_arr => |x| try w.print("PUSH (array #{x})", .{x}),
             .call_sym => |x| try w.print("CALL (symbol #{x})", .{x}),

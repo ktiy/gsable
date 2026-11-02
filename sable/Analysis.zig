@@ -95,10 +95,7 @@ fn resolve(x: *Self, idx: Node.Index) E!StackEffect {
     const eff: StackEffect = switch (node.kind) {
         .real, .byte, .string => StackEffect.nilad,
         .primitive => try x.primitive(node),
-        .builtin => blk: {
-            try x.err(.nyi, node.token);
-            break :blk StackEffect.nilad;
-        },
+        .builtin => try x.builtin(node),
         .symbol => try x.use_symbol(node),
         .assign => try x.assign(node),
         .modify => try x.modify(node),
@@ -108,6 +105,17 @@ fn resolve(x: *Self, idx: Node.Index) E!StackEffect {
     };
     x.sigs[idx] = eff;
     return eff;
+}
+
+fn builtin(x: *Self, node: Node) E!StackEffect {
+    const pos = x.ts.items(.pos)[node.token];
+    const str = x.buf[pos.start + 1 .. pos.end];
+    // TODO: we can resolve the builtin before
+    if (sbl.builtins.map.get(str)) |b| {
+        return sbl.builtins.stack_effect(b);
+    }
+    try x.err(.unbound_builtin, node.token);
+    return StackEffect.nilad;
 }
 
 fn compose(x: *Self, start: u32, end: u32) E!StackEffect {
