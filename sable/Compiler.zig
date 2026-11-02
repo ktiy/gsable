@@ -160,7 +160,21 @@ fn expr(w: *Compiler, n: Node.Index) E!void {
         },
 
         .modifier => unreachable,
-        .modify => try w.fail(.nyi, n),
+        .modify => {
+            const lhs = w.node(.lhs, n);
+            const rhs = w.node(.rhs, n);
+
+            // TODO: inlining primitives etc
+            const lam = try w.lambda(lhs);
+            const mod_idx = w.node(.token, rhs);
+            const mod = w.ts.items(.kind)[mod_idx];
+
+            std.debug.assert(lam <= std.math.maxInt(u32));
+            try w.emit(.{ .call_lam_mod = .{
+                .lam = @intCast(lam),
+                .mod = mod,
+            } }, lhs);
+        },
 
         .sequence => {
             const lhs = w.node(.lhs, n);

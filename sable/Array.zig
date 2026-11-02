@@ -169,7 +169,7 @@ pub fn refc(self: Array) u16 {
     return self.header.refc;
 }
 
-pub fn count(self: Array) u64 {
+pub fn length(self: Array) u64 {
     return self.header.len;
 }
 

@@ -59,6 +59,13 @@ pub fn step(m: *Machine) bool {
             m.ret_p += 1;
             m.ip = m.prog.lambdas[idx];
         },
+        .call_lam_mod => |x| {
+            const idx, const tok = .{ x.lam, x.mod };
+            const lam = m.prog.lambdas[idx];
+            const mod = sbl.primitives.mod(tok);
+            mod(m, lam);
+            return m.e.kind == .none;
+        },
         .pop_into_sym => |sym| {
             m.mem.put(m.gpa, sym, m.pop()) catch {
                 m.throw(.oom);
@@ -106,6 +113,31 @@ pub fn pop(m: *Machine) Cell {
     std.debug.assert(m.dat_p > 0);
     m.dat_p -= 1;
     return m.dat[@as(usize, @intCast(m.dat_p))];
+}
+
+pub fn call(m: *Machine, f: usize) bool {
+    if (m.ret_p >= ret_stack_size) {
+        m.throw(.oom);
+        return false;
+    }
+
+    const depth = m.ret_p;
+    m.ret[@as(usize, @intCast(depth))] = m.ip;
+    m.ret_p += 1;
+    m.ip = f;
+
+    while (m.ret_p > depth) {
+        if (!m.step()) {
+            if (m.e.kind == .none) {
+                // ?
+                m.throw(.nyi);
+            }
+            m.ret_p = depth;
+            return false;
+        }
+    }
+
+    return true;
 }
 
 const Machine = @This();

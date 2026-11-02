@@ -28,6 +28,7 @@ pub fn token_from_cp(c: u21) Token.Kind {
 }
 
 pub const Prim = fn (m: *sbl.Machine) void;
+pub const Mod = fn (m: *sbl.Machine, f: usize) void;
 
 pub fn run(t: Token.Kind) *const Prim {
     const arith = @import("prim/arith.zig");
@@ -55,6 +56,13 @@ pub fn run(t: Token.Kind) *const Prim {
         .pow => arith.pow,
         .mod => arith.mod,
         else => nyi.run,
+    };
+}
+
+pub fn mod(t: Token.Kind) *const Mod {
+    return switch (t) {
+        .fold => @import("mod/fold.zig").run,
+        else => unreachable,
     };
 }
 
