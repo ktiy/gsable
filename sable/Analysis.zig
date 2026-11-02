@@ -200,7 +200,7 @@ fn primitive_effect(kind: Token.Kind) ?StackEffect {
         .over => StackEffect.init(2, 3),
         .rot => StackEffect.init(3, 3),
         .iota, .shape, .length, .order_up, .order_down => StackEffect.monad,
-        .peek, .reshape, .add, .sub, .mul, .div, .pow, .mod => StackEffect.dyad,
+        .peek, .reshape, .add, .sub, .mul, .div, .pow, .mod, .eq, .neq, .lt, .lt_eq, .gt, .gt_eq => StackEffect.dyad,
         else => null,
     };
 }

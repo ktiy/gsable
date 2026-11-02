@@ -33,6 +33,7 @@ pub const Mod = fn (m: *sbl.Machine, f: usize) void;
 
 pub fn run(t: Token.Kind) *const Prim {
     const arith = @import("prim/arith.zig");
+    const boolean = @import("prim/bool.zig");
     const sort = @import("prim/sort.zig");
     const shape = @import("prim/shape.zig");
     const stack = @import("prim/stack.zig");
@@ -56,6 +57,12 @@ pub fn run(t: Token.Kind) *const Prim {
         .div => arith.div,
         .pow => arith.pow,
         .mod => arith.mod,
+        .eq => boolean.eq,
+        .neq => boolean.neq,
+        .gt => boolean.gt,
+        .gt_eq => boolean.gt_eq,
+        .lt => boolean.lt,
+        .lt_eq => boolean.lt_eq,
         else => nyi.run,
     };
 }

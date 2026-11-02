@@ -33,10 +33,18 @@ pub const Kind = enum(u8) {
     length,
     order_up,
     order_down,
+    not,
 
     // dyad
     peek,
     reshape,
+    eq,
+    neq,
+    lt,
+    lt_eq,
+    gt,
+    gt_eq,
+
     add,
     sub,
     mul,
@@ -166,6 +174,13 @@ pub const Lexer = struct {
                 '{' => t.kind = lex.atom(.brace_open),
                 '}' => t.kind = lex.atom(.brace_close),
                 '‿' => t.kind = lex.atom(.strand),
+                '¬' => t.kind = lex.atom(.not),
+                '=' => t.kind = lex.atom(.eq),
+                '≠' => t.kind = lex.atom(.neq),
+                '>' => t.kind = lex.atom(.gt),
+                '≥' => t.kind = lex.atom(.gt_eq),
+                '<' => t.kind = lex.atom(.lt),
+                '≤' => t.kind = lex.atom(.lt_eq),
                 else => |cp| {
                     const prim = primitives.token_from_cp(cp);
                     if (prim == .unknown) return Error.unexpected_character;

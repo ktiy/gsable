@@ -32,6 +32,9 @@ const help_keymap =
     \\S Ρ `reshape'
     \\+ × `mul'
     \\- ÷ `div'
+    \\= ≠ `not eq'
+    \\< ≤ `lt or eq'
+    \\> ≥ `gt or eq'
     \\1 ´ `fold'
 ;
 
@@ -57,6 +60,9 @@ pub fn keymap(c: u8) ?u21 {
         'S' => 'Ρ',
         '+' => '×',
         '-' => '÷',
+        '=' => '≠',
+        '<' => '≤',
+        '>' => '≥',
         // modifiers
         '1' => '´',
         else => null,
