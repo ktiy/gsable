@@ -9,17 +9,21 @@ const help_index =
 ;
 
 const help_keymap =
+    \\  ‿ `strand'
+    \\[ ← `assign'
+    \\f λ `function'
     \\i ι `iota'
     \\l ⧻ `length'
     \\o ⫦ `over'
     \\O ⊪ `rotate'
     \\p □ `peek'
     \\r △ `order up'
-    \\R ▽ `order down`
+    \\R ▽ `order down'
     \\s ρ `shape'
     \\S Ρ `reshape'
     \\+ × `mul'
     \\- ÷ `div'
+    \\1 ´ `fold'
 ;
 
 const help_primitives =
@@ -28,6 +32,11 @@ const help_primitives =
 
 pub fn keymap(c: u8) ?u21 {
     return switch (c) {
+        // syntax
+        'f' => 'λ',
+        '[' => '←',
+        ' ' => '‿',
+        // primitives
         'i' => 'ι',
         'l' => '⧻',
         'o' => '⫦',
@@ -39,6 +48,8 @@ pub fn keymap(c: u8) ?u21 {
         'S' => 'Ρ',
         '+' => '×',
         '-' => '÷',
+        // modifiers
+        '1' => '´',
         else => null,
     };
 }
