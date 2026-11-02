@@ -6,7 +6,7 @@ len: usize = 0,
 
 pub const line_size = 4096;
 
-pub fn read_line(self: *Readline, prompt: []const u8) ![]const u8 {
+pub fn read_line(self: *Readline, prompt: []const u8) ![:0]const u8 {
     self.len = 0;
 
     const old = self.raw_mode() catch |e| {
@@ -27,7 +27,8 @@ pub fn read_line(self: *Readline, prompt: []const u8) ![]const u8 {
         switch (c) {
             '\r', '\n' => {
                 self.write_bytes("\r\n");
-                return self.buf[0..self.len];
+                self.buf[self.len] = 0;
+                return @ptrCast(self.buf[0..self.len]);
             },
             3 => {
                 // ^C
@@ -86,7 +87,7 @@ fn read_byte(self: *Readline) !u8 {
     return buf[0];
 }
 
-fn read_bytes(self: *Readline) ![]const u8 {
+fn read_bytes(self: *Readline) ![:0]const u8 {
     while (true) {
         const c = self.read_byte() catch |e| {
             if (e == error.Eof and self.len > 0) break;
@@ -98,7 +99,8 @@ fn read_bytes(self: *Readline) ![]const u8 {
             self.len += 1;
         }
     }
-    return self.buf[0..self.len];
+    self.buf[self.len] = 0;
+    return @ptrCast(self.buf[0..self.len]);
 }
 
 pub fn write_bytes(self: *Readline, bytes: []const u8) void {

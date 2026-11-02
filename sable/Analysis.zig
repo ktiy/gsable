@@ -7,7 +7,9 @@ errors: std.ArrayList(CompileError) = .empty,
 /// [idx: Node.Index]
 sigs: []StackEffect,
 /// [idx: Symbol]
-env: std.ArrayList(?StackEffect) = .empty,
+env: *Env,
+
+pub const Env = std.ArrayList(?StackEffect);
 
 pub const Result = struct {
     sigs: []StackEffect,
@@ -31,6 +33,19 @@ pub fn run(
     buf: []const u8,
     st: *SymTable,
 ) E!Result {
+    var env = Env.empty;
+    defer env.deinit(gpa);
+    return run_env(gpa, ast, ts, buf, st, &env);
+}
+
+pub fn run_env(
+    gpa: std.mem.Allocator,
+    ast: Syntax,
+    ts: Token.Slice,
+    buf: []const u8,
+    st: *SymTable,
+    env: *Env,
+) E!Result {
     const sigs = try gpa.alloc(StackEffect, ast.tree.len);
     errdefer gpa.free(sigs);
     @memset(sigs, StackEffect.init(0, 0));
@@ -42,8 +57,8 @@ pub fn run(
         .buf = buf,
         .st = st,
         .sigs = sigs,
+        .env = env,
     };
-    defer x.env.deinit(gpa);
     errdefer x.errors.deinit(gpa);
 
     const root = ast.tree.get(ast.root);

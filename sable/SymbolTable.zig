@@ -1,5 +1,4 @@
 gpa: std.mem.Allocator,
-/// Strings are externally owned
 pool: std.array_hash_map.String(void),
 
 pub const Symbol = enum(u32) {
@@ -15,13 +14,17 @@ pub fn init(gpa: std.mem.Allocator) !SymTable {
 }
 
 pub fn deinit(self: *SymTable) void {
+    var iter = self.pool.iterator();
+    while (iter.next()) |ent| {
+        self.gpa.free(ent.key_ptr.*);
+    }
     self.pool.deinit(self.gpa);
 }
 
-/// id remains externally owned
 pub fn intern(self: *SymTable, id: []const u8) !Symbol {
     if (id.len == 0) return .none;
-    const elem = try self.pool.getOrPut(self.gpa, id);
+    const str = try self.gpa.dupe(u8, id);
+    const elem = try self.pool.getOrPut(self.gpa, str);
     return @fromBackingInt(@intCast(elem.index));
 }
 

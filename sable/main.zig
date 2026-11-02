@@ -86,7 +86,8 @@ pub fn main(init: std.process.Init.Minimal) !void {
     }
 
     if (repl) {
-        var x = Repl.init();
+        var x = try Repl.init(gpa);
+        defer x.deinit();
         try x.run();
         std.process.exit(1);
     }
