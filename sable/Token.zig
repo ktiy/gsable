@@ -51,6 +51,8 @@ pub const Kind = enum(u8) {
     div,
     pow,
     mod,
+    min,
+    max,
 
     // modifiers
     fold,
@@ -181,6 +183,8 @@ pub const Lexer = struct {
                 '≥' => t.kind = lex.atom(.gt_eq),
                 '<' => t.kind = lex.atom(.lt),
                 '≤' => t.kind = lex.atom(.lt_eq),
+                '↧' => t.kind = lex.atom(.min),
+                '↥' => t.kind = lex.atom(.max),
                 else => |cp| {
                     const prim = primitives.token_from_cp(cp);
                     if (prim == .unknown) return Error.unexpected_character;

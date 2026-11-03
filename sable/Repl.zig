@@ -23,6 +23,8 @@ const help_keymap =
     \\f λ `function'
     \\i ι `iota'
     \\l ⧻ `length'
+    \\m ↧ `min'
+    \\M ↥ `max'
     \\o ⫦ `over'
     \\O ⊪ `rotate'
     \\p □ `peek'
@@ -51,6 +53,8 @@ pub fn keymap(c: u8) ?u21 {
         // primitives
         'i' => 'ι',
         'l' => '⧻',
+        'm' => '↧',
+        'M' => '↥',
         'o' => '⫦',
         'O' => '⊪',
         'p' => '□',
@@ -64,7 +68,7 @@ pub fn keymap(c: u8) ?u21 {
         '<' => '≤',
         '>' => '≥',
         // modifiers
-        '1' => '´',
+        '/' => '´',
         else => null,
     };
 }

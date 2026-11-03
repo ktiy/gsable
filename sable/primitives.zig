@@ -57,6 +57,8 @@ pub fn run(t: Token.Kind) *const Prim {
         .div => arith.div,
         .pow => arith.pow,
         .mod => arith.mod,
+        .min => arith.min,
+        .max => arith.max,
         .eq => boolean.eq,
         .neq => boolean.neq,
         .gt => boolean.gt,
@@ -77,7 +79,7 @@ pub fn mod(t: Token.Kind) *const Mod {
 
 pub fn is_prim(k: Token.Kind) bool {
     const i: u8 = @backingInt(Token.Kind.dup);
-    const j: u8 = @backingInt(Token.Kind.mod);
+    const j: u8 = @backingInt(Token.Kind.max);
     const x: u8 = @backingInt(k);
     return x >= i and x <= j;
 }
