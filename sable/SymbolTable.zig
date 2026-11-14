@@ -1,5 +1,6 @@
 gpa: std.mem.Allocator,
-pool: std.array_hash_map.String(void),
+buf: std.ArrayList(u8) = .empty,
+strs: std.ArrayList([]const u8) = .empty,
 
 pub const Symbol = enum(u32) {
     none = std.math.maxInt(u32),
@@ -9,28 +10,35 @@ pub const Symbol = enum(u32) {
 pub fn init(gpa: std.mem.Allocator) !SymTable {
     return .{
         .gpa = gpa,
-        .pool = try .init(gpa, &.{}, &.{}),
     };
 }
 
 pub fn deinit(self: *SymTable) void {
-    var iter = self.pool.iterator();
-    while (iter.next()) |ent| {
-        self.gpa.free(ent.key_ptr.*);
-    }
-    self.pool.deinit(self.gpa);
+    self.buf.deinit(self.gpa);
+    self.strs.deinit(self.gpa);
 }
 
 pub fn intern(self: *SymTable, id: []const u8) !Symbol {
     if (id.len == 0) return .none;
-    const str = try self.gpa.dupe(u8, id);
-    const elem = try self.pool.getOrPut(self.gpa, str);
-    return @fromBackingInt(@intCast(elem.index));
+
+    for (self.strs.items, 0..) |str, i| {
+        if (std.mem.eql(u8, id, str)) {
+            return @fromBackingInt(@truncate(i));
+        }
+    }
+
+    const i = @as(u32, @truncate(self.strs.items.len));
+    try self.buf.appendSlice(self.gpa, id);
+
+    const slice = self.buf.items[i..][0..id.len];
+    try self.strs.append(self.gpa, slice);
+
+    return @fromBackingInt(i);
 }
 
 pub fn get(self: *SymTable, sym: Symbol) []const u8 {
     if (sym == .none) return "";
-    return self.pool.keys()[@backingInt(sym)];
+    return self.strs.items[@backingInt(sym)];
 }
 
 test "symbol table" {
