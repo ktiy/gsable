@@ -38,6 +38,7 @@ const help_keymap =
     \\< ≤ `lt or eq'
     \\> ≥ `gt or eq'
     \\1 ´ `fold'
+    \\2 ¨ `each'
 ;
 
 const help_primitives =
@@ -69,6 +70,7 @@ pub fn keymap(c: u8) ?u21 {
         '>' => '≥',
         // modifiers
         '/' => '´',
+        '2' => '¨',
         else => null,
     };
 }

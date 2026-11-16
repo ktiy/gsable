@@ -57,6 +57,7 @@ pub const Kind = enum(u8) {
 
     // modifiers
     fold,
+    each,
     scan,
 
     comment,
@@ -196,6 +197,7 @@ pub const Lexer = struct {
                 '*' => t.kind = lex.atom(.pow),
                 '|' => t.kind = lex.atom(.mod),
                 '´' => t.kind = lex.atom(.fold),
+                '¨' => t.kind = lex.atom(.each),
                 '`' => t.kind = lex.atom(.scan),
                 '←' => t.kind = lex.atom(.left_arrow),
                 '[' => t.kind = lex.atom(.array_open),

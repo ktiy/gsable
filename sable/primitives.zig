@@ -47,6 +47,7 @@ pub fn mod(t: Token.Kind) *const Mod {
     return switch (t) {
         .fold => @import("mod/fold.zig").run,
         .scan => @import("mod/scan.zig").run,
+        .each => @import("mod/each.zig").run,
         else => unreachable,
     };
 }
