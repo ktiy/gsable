@@ -170,9 +170,13 @@ fn modify(x: *Self, node: Node) E!StackEffect {
             return StackEffect.monad;
         },
         .each => { // : monad -> monad ; dyad -> dyad (nyi)
-            if (operand.in != 1 or operand.out != 1) {
-                try x.err(.bad_modifier_operand, mod_tok);
+            if (operand.in == 1 and operand.out == 0) {
+                return StackEffect.nilad;
             }
+            if (operand.in == 1 or operand.out == 1) {
+                return StackEffect.monad;
+            }
+            try x.err(.bad_modifier_operand, mod_tok);
             return StackEffect.monad;
         },
         .scan => { // : dyad -> monad

@@ -12,8 +12,27 @@ pub fn run(m: *sbl.Machine, f: usize) void {
     switch (arr.ty()) {
         .any => {
             const elems = arr.any_slice();
+
+            const x0 = elems[0];
+            const p = m.dat_p;
+            m.push(x0);
+            if (!m.call(f)) return;
+            const p2 = m.dat_p;
+
+            // nilad
+            if (p == p2) {
+                for (elems[1..]) |elem| {
+                    m.push(elem);
+                    if (!m.call(f)) return;
+                }
+                return;
+            }
+
+            // monad
             const res = sbl.Array.init(m.gpa, arr.shape(), .any) catch return m.throw(.oom);
             const xs = res.any_slice();
+
+            xs[0] = x0;
 
             for (xs, elems) |*o, elem| {
                 m.push(elem);
