@@ -177,6 +177,26 @@ pub const Lexer = struct {
                 },
                 ';', '⋄' => t.kind = lex.atom(.semicolon),
                 'λ' => t.kind = lex.atom(.lambda),
+                '.' => t.kind = lex.atom(.dup),
+                ',' => t.kind = lex.atom(.drop),
+                '~' => t.kind = lex.atom(.swap),
+                '⫦' => t.kind = lex.atom(.over),
+                '⊪' => t.kind = lex.atom(.rot),
+                'ι' => t.kind = lex.atom(.iota),
+                'ρ' => t.kind = lex.atom(.shape),
+                '⧻' => t.kind = lex.atom(.length),
+                '△' => t.kind = lex.atom(.order_up),
+                '▽' => t.kind = lex.atom(.order_down),
+                '□' => t.kind = lex.atom(.peek),
+                'Ρ' => t.kind = lex.atom(.reshape),
+                '+' => t.kind = lex.atom(.add),
+                '-' => t.kind = lex.atom(.sub),
+                '×' => t.kind = lex.atom(.mul),
+                '÷' => t.kind = lex.atom(.div),
+                '*' => t.kind = lex.atom(.pow),
+                '|' => t.kind = lex.atom(.mod),
+                '´' => t.kind = lex.atom(.fold),
+                '`' => t.kind = lex.atom(.scan),
                 '←' => t.kind = lex.atom(.left_arrow),
                 '[' => t.kind = lex.atom(.array_open),
                 ']' => t.kind = lex.atom(.array_close),
@@ -192,11 +212,7 @@ pub const Lexer = struct {
                 '≤' => t.kind = lex.atom(.lt_eq),
                 '↧' => t.kind = lex.atom(.min),
                 '↥' => t.kind = lex.atom(.max),
-                else => |cp| {
-                    const prim = primitives.token_from_cp(cp);
-                    if (prim == .unknown) return Error.unexpected_character;
-                    t.kind = lex.atom(prim);
-                },
+                else => return Error.unexpected_character,
             },
             .start_backslash => switch (try lex.peek()) {
                 '\n' => {

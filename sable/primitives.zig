@@ -2,32 +2,6 @@ const std = @import("std");
 const sbl = @import("sbl");
 const Token = sbl.Token;
 
-pub fn token_from_cp(c: u21) Token.Kind {
-    return switch (c) {
-        '.' => .dup, //     x -- x x
-        ',' => .drop, //    x --
-        '~' => .swap, //  a x -- x a
-        '⫦' => .over, //  a x -- a x a
-        '⊪' => .rot, // j a x -- a x j
-        'ι' => .iota,
-        'ρ' => .shape,
-        '⧻' => .length,
-        '△' => .order_up,
-        '▽' => .order_down,
-        '□' => .peek,
-        'Ρ' => .reshape,
-        '+' => .add,
-        '-' => .sub,
-        '×' => .mul,
-        '÷' => .div,
-        '*' => .pow,
-        '|' => .mod,
-        '´' => .fold,
-        '`' => .scan,
-        else => .unknown,
-    };
-}
-
 pub const Prim = fn (m: *sbl.Machine) void;
 pub const Mod = fn (m: *sbl.Machine, f: usize) void;
 
