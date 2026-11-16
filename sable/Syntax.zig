@@ -41,6 +41,7 @@ pub const Node = struct {
         symbol,
         real,
         byte,
+        char,
         string,
         primitive,
         modifier,
@@ -256,6 +257,7 @@ const Parser = struct {
             .builtin => .init(.builtin, p.incr()),
             .symbol => .init(.symbol, p.incr()),
             .byte => .init(.byte, p.incr()),
+            .char => .init(.char, p.incr()),
             .real => .init(.real, p.incr()),
             .string => .init(.string, p.incr()),
             else => if (prim.is_prim(k))
@@ -341,7 +343,7 @@ const report = struct {
         try w.print("{s}{s} {d}) {s}", .{ prefix, connector, idx, @tagName(node.kind) });
 
         switch (node.kind) {
-            .builtin, .symbol, .real, .byte, .string, .primitive, .modifier => {
+            .builtin, .symbol, .real, .byte, .char, .string, .primitive, .modifier => {
                 const pos = tokens.items(.pos)[node.token];
                 const loc = pos.line_col(buf);
                 try w.print(" \"{s}\" ({d}:{d})\n", .{ pos.slice(buf), loc.line, loc.column });

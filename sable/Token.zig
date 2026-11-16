@@ -9,6 +9,7 @@ pub const Kind = enum(u8) {
     builtin,
     symbol,
     byte,
+    char,
     real,
     string,
     lambda,
@@ -99,6 +100,7 @@ pub const Lexer = struct {
             start,
             start_backslash,
             newline,
+            char_start,
             comment_line,
             comment_paren,
             symbol,
@@ -167,6 +169,11 @@ pub const Lexer = struct {
                     lex.incr();
                     t.kind = .string;
                     continue :state .string_start;
+                },
+                '\'' => {
+                    lex.incr();
+                    t.kind = .char;
+                    continue :state .char_start;
                 },
                 ';', '⋄' => t.kind = lex.atom(.semicolon),
                 'λ' => t.kind = lex.atom(.lambda),
@@ -317,6 +324,10 @@ pub const Lexer = struct {
                     lex.incr();
                     continue :state .string_start;
                 },
+            },
+            .char_start => {
+                _ = try lex.peek();
+                lex.incr();
             },
         }
 

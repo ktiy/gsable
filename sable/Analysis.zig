@@ -93,7 +93,7 @@ pub fn classify(e: StackEffect) Binding {
 fn resolve(x: *Self, idx: Node.Index) E!StackEffect {
     const node = x.ast.tree.get(idx);
     const eff: StackEffect = switch (node.kind) {
-        .real, .byte, .string => StackEffect.nilad,
+        .real, .byte, .char, .string => StackEffect.nilad,
         .primitive => try x.primitive(node),
         .builtin => try x.builtin(node),
         .symbol => try x.use_symbol(node),

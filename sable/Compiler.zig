@@ -104,7 +104,7 @@ fn deinit(w: *Compiler) void {
 
 fn expr(w: *Compiler, n: Node.Index) E!void {
     switch (w.node(.kind, n)) {
-        inline .real, .byte, .string => |k| try w.push_const(k, n),
+        inline .real, .byte, .char, .string => |k| try w.push_const(k, n),
 
         .array => |k| {
             if (w.is_const(k, n)) {
@@ -192,7 +192,7 @@ fn expr(w: *Compiler, n: Node.Index) E!void {
 
 fn is_const(w: *Compiler, comptime k: Node.Kind, n: Node.Index) bool {
     return switch (k) {
-        .real, .byte, .string => true,
+        .real, .byte, .char, .string => true,
         .array => {
             const lhs = w.node(.lhs, n);
             const rhs = w.node(.rhs, n);
@@ -239,6 +239,11 @@ fn node_to_cell(w: *Compiler, comptime k: Node.Kind, n: Node.Index) E!?Cell {
             const s = strip_num(&o, u[1..]) orelse return w.invalid(t);
             const x = std.fmt.parseUnsigned(u8, s, 16) catch return w.invalid(t);
             return Cell.byte(x);
+        },
+        .char => {
+            const c = u[1..];
+            if (c.len != 1) return w.invalid(t);
+            return Cell.char(c[0]);
         },
         .array => {
             const lhs = w.node(.lhs, n);

@@ -162,7 +162,7 @@ pub fn format(self: Cell, w: *std.Io.Writer) !void {
                 try w.print("(char #{X})", .{cp});
                 return;
             };
-            try w.writeAll(buf[0..len]);
+            try w.print("'{s}", .{buf[0..len]});
         },
         .array => {
             try w.writeAll("[");
