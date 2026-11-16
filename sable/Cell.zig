@@ -165,21 +165,34 @@ pub fn format(self: Cell, w: *std.Io.Writer) !void {
             try w.print("'{s}", .{buf[0..len]});
         },
         .array => {
-            try w.writeAll("[");
-            //TODO: multidimensional arrays
             const arr = self.into(.array);
-            if (arr.header.rank != 1) {
-                try w.writeAll("...]");
-                return;
-            }
-            var iter = self.into(.array).iter();
-            while (iter.next()) |v| {
-                try w.print("{f} ", .{v});
-            }
-            try w.writeAll("\x08]");
+            var iter = arr.iter();
+            try fmt_dims(w, &iter, arr.shape()[0..arr.ra()]);
         },
         .none => try w.print("(none)", .{}),
     }
+}
+
+// TODO: nicer array formatting
+fn fmt_dims(
+    w: *std.Io.Writer,
+    iter: *sbl.ArrayIterator,
+    shape: []const i64,
+) !void {
+    try w.writeAll("[");
+    const dim: usize = @intCast(shape[0]);
+    for (0..dim) |i| {
+        if (i != 0) {
+            try w.writeAll(" ");
+        }
+        if (shape.len == 1) {
+            const x = iter.next().?;
+            try w.print("{f}", .{x});
+        } else {
+            try fmt_dims(w, iter, shape[1..]);
+        }
+    }
+    try w.writeAll("]");
 }
 
 const Cell = @This();
