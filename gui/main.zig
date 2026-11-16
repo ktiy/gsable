@@ -4,6 +4,7 @@ const sbl = @import("sbl");
 const sdl = @import("sdl3");
 
 pub const App = @import("App.zig");
+
 const io = std.Io.Threaded.global_single_threaded.io();
 const page_allocator = std.heap.page_allocator;
 

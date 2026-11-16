@@ -15,6 +15,8 @@ window: sdl.video.Window,
 renderer: sdl.render.Renderer,
 fps_cap: sdl.extras.FramerateCapper(f32),
 
+font: sdl.ttf.Font,
+
 quit: bool,
 
 pub fn init(
@@ -32,6 +34,7 @@ pub fn init(
 
     const flags: sdl.InitFlags = .{ .video = true };
     try sdl.init(flags);
+    try sdl.ttf.init();
 
     const window, const renderer = try sdl.render.Renderer.initWithWindow(
         "sable",
@@ -50,15 +53,18 @@ pub fn init(
         .window = window,
         .renderer = renderer,
         .fps_cap = .{ .mode = .{ .limited = fps } },
+        .font = undefined,
         .quit = false,
     };
 
     try self.set_app_icon();
+    self.font = try .init(try self.get_dir_path(.data, "sable/fairfax-hd/FairfaxHD.ttf"), 24);
 }
 
 pub fn deinit(self: *App) void {
     self.window.deinit();
     self.renderer.deinit();
+    self.font.deinit();
     sdl.shutdown();
 }
 
@@ -68,8 +74,16 @@ pub fn frame(self: *App) !bool {
     const dt = self.fps_cap.delay();
     _ = dt;
 
-    try self.renderer.setDrawColor(.{.r=255, .g=255, .b=255, .a=255});
+    try self.renderer.setDrawColor(.{ .r = 255, .g = 255, .b = 255, .a = 255 });
     try self.renderer.renderFillRect(null);
+
+    const text_surf = try self.font.renderTextBlended("sable", .{ .r = 0, .g = 0, .b = 0, .a = 255 });
+    defer text_surf.deinit();
+
+    const text_text = try self.renderer.createTextureFromSurface(text_surf);
+    defer text_text.deinit();
+
+    try self.renderer.renderTexture(text_text, null, null);
 
     return true;
 }
@@ -79,10 +93,8 @@ pub fn frame_end(self: *App) !void {
 }
 
 fn set_app_icon(self: *App) !void {
-    const data_dir = try folders.open(self.io, self.tmp.allocator(), &self.env, .data, .{}) orelse {
-        return std.Io.File.OpenError.FileNotFound;
-    };
-    const sbl_data_dir = try data_dir.openDir(self.io, "sbl", .{});
+    const data_dir = try self.open_dir(.data);
+    const sbl_data_dir = try data_dir.openDir(self.io, "sable", .{});
     const icon_file = try sbl_data_dir.readFileAlloc(self.io, "icon.png", self.gpa, .unlimited);
     defer self.gpa.free(icon_file);
 
@@ -90,6 +102,20 @@ fn set_app_icon(self: *App) !void {
     defer icon.deinit();
 
     try self.window.setIcon(icon);
+}
+
+fn open_dir(self: *App, dir: folders.KnownFolder) !std.Io.Dir {
+    return try folders.open(self.io, self.tmp.allocator(), &self.env, dir, .{}) orelse {
+        return std.Io.File.OpenError.FileNotFound;
+    };
+}
+
+fn get_dir_path(self: *App, dir: folders.KnownFolder, path: []const u8) ![:0]const u8 {
+    const base = try folders.getPath(self.io, self.tmp.allocator(), &self.env, dir) orelse {
+        return std.Io.File.OpenError.FileNotFound;
+    };
+    const full = try std.mem.concatWithSentinel(self.tmp.allocator(), u8, &.{ base, "/", path }, 0);
+    return full;
 }
 
 const folders = @import("known_folders");

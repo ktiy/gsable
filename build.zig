@@ -14,8 +14,12 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
         .ext_image = true,
+        .ext_ttf = true,
     });
-    const known_folders = b.dependency("known_folders", .{ .target = target, .optimize = optimize });
+    const known_folders = b.dependency("known_folders", .{
+        .target = target,
+        .optimize = optimize,
+    });
 
     const imports = [_]std.Build.Module.Import{
         .{ .name = "sdl3", .module = sdl3.module("sdl3") },
