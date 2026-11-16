@@ -25,8 +25,8 @@ pub fn run(m: *sbl.Machine) void {
 
 // a x -- a reshape x
 pub fn re(m: *sbl.Machine) void {
-    const a = m.pop();
     const x = m.pop();
+    const a = m.pop();
 
     if (a.k == .none) {
         m.push(a);
