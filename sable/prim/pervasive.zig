@@ -84,26 +84,38 @@ fn apply_AA(comptime F: type, m: M, ac: T, xc: T) E!T {
     const as = ac.into(.array);
     const xs = xc.into(.array);
 
-    // TODO: array broadcasting
-    if (as.header.rank != xs.header.rank)
-        return E.Rank;
+    const a_gt_x = as.ra() > xs.ra();
+    const g = if (a_gt_x) as else xs;
+    const l = if (a_gt_x) xs else as;
+    const rs: usize = @intCast(l.ra());
 
-    if (!std.mem.eql(i64, as.shape(), xs.shape()))
+    if (!std.mem.eql(i64, g.shape()[0..rs], l.shape()))
         return E.Shape;
 
-    var arr = try as.prepare_write(m.gpa);
-    var xi = xs.iter();
+    var rep: usize = 1;
+    for (g.shape()[rs..]) |dim| {
+        rep *= @intCast(dim);
+    }
+
+    var arr = try g.prepare_write(m.gpa);
+    errdefer arr.release(m.gpa);
+    const ls = l.any_slice();
 
     switch (as.header.kind) {
-        .any => for (arr.any_slice()) |*elem| {
-            const x = xi.next().?;
-            const a = elem.*;
-            elem.* = apply(F, m, a, x);
+        .any => if (a_gt_x) {
+            for (arr.any_slice(), 0..) |*elem, i| {
+                const x = ls[i / rep];
+                elem.* = try apply_e(F, m, elem.*, x);
+            }
+        } else {
+            for (arr.any_slice(), 0..) |*elem, i| {
+                const x = ls[i / rep];
+                elem.* = try apply_e(F, m, x, elem.*);
+            }
         },
     }
 
-    xs.release(m.gpa);
-
+    l.release(m.gpa);
     return .array(arr);
 }
 
