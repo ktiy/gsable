@@ -54,10 +54,32 @@ pub fn re(m: *sbl.Machine) void {
     const sh = m.gpa.alloc(sbl.Array.Dim, sh_len) catch return m.throw(.oom);
     defer m.gpa.free(sh);
 
+    var auto: ?usize = null;
+    var known: usize = 1;
+
     var iter = xs.iter();
-    for (sh) |*dim| {
+    for (sh, 0..) |*dim, i| {
         const elem = iter.next().?;
-        dim.* = elem.coerce(.char);
+        if (elem.k == .none) {
+            if (auto) |_| return m.throw(.rank);
+            auto = i;
+            dim.* = 0;
+        } else {
+            dim.* = elem.coerce(.char);
+            known *= @intCast(dim.*);
+        }
+    }
+
+    if (auto) |i| {
+        const total: usize = if (a.atom())
+            1
+        else
+            a.into(.array).length();
+
+        if (known == 0 or total % known != 0)
+            return m.throw(.rank);
+
+        sh[i] = @intCast(total / known);
     }
 
     var arr = sbl.Array.init(m.gpa, sh, .any) catch return m.throw(.oom);

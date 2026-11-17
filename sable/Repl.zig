@@ -25,6 +25,7 @@ const help_keymap =
     \\l ⧻ `length'
     \\m ↧ `min'
     \\M ↥ `max'
+    \\n ∅ `none'
     \\o ⫦ `over'
     \\O ⊪ `rotate'
     \\p □ `peek'
@@ -56,6 +57,7 @@ pub fn keymap(c: u8) ?u21 {
         'l' => '⧻',
         'm' => '↧',
         'M' => '↥',
+        'n' => '∅',
         'o' => '⫦',
         'O' => '⊪',
         'p' => '□',
