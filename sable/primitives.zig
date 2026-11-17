@@ -46,8 +46,9 @@ pub fn run(t: Token.Kind) *const Prim {
 pub fn mod(t: Token.Kind) *const Mod {
     return switch (t) {
         .fold => @import("mod/fold.zig").run,
-        .scan => @import("mod/scan.zig").run,
         .each => @import("mod/each.zig").run,
+        .cells => @import("mod/cells.zig").run,
+        .scan => @import("mod/scan.zig").run,
         else => unreachable,
     };
 }

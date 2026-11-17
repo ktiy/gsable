@@ -184,6 +184,12 @@ fn modify(x: *Self, node: Node) E!StackEffect {
             try x.err(.bad_modifier_operand, mod_tok);
             return StackEffect.monad;
         },
+        .cells => { // : monad -> monad
+            if (operand.in != 1 or operand.out != 1) {
+                try x.err(.bad_modifier_operand, mod_tok);
+            }
+            return StackEffect.monad;
+        },
         .scan => { // : dyad -> monad
             if (operand.in != 2 or operand.out != 1) {
                 try x.err(.bad_modifier_operand, mod_tok);

@@ -61,6 +61,7 @@ pub const Kind = enum(u8) {
     // modifiers
     fold,
     each,
+    cells,
     scan,
 
     comment_line,
@@ -191,9 +192,6 @@ pub const Lexer = struct {
                 '÷' => t.kind = lex.atom(.div),
                 '*' => t.kind = lex.atom(.pow),
                 '|' => t.kind = lex.atom(.mod),
-                '´' => t.kind = lex.atom(.fold),
-                '¨' => t.kind = lex.atom(.each),
-                '`' => t.kind = lex.atom(.scan),
                 '←' => t.kind = lex.atom(.left_arrow),
                 '[' => t.kind = lex.atom(.array_open),
                 ']' => t.kind = lex.atom(.array_close),
@@ -211,6 +209,10 @@ pub const Lexer = struct {
                 '≤' => t.kind = lex.atom(.lt_eq),
                 '↧' => t.kind = lex.atom(.min),
                 '↥' => t.kind = lex.atom(.max),
+                '´' => t.kind = lex.atom(.fold),
+                '¨' => t.kind = lex.atom(.each),
+                ':' => t.kind = lex.atom(.cells),
+                '`' => t.kind = lex.atom(.scan),
                 else => return Error.unexpected_character,
             },
             .start_backslash => switch (try lex.peek()) {
