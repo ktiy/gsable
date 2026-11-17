@@ -32,9 +32,9 @@ pub fn run(m: *sbl.Machine, f: usize) void {
             const res = sbl.Array.init(m.gpa, arr.shape(), .any) catch return m.throw(.oom);
             const xs = res.any_slice();
 
-            xs[0] = x0;
+            xs[0] = m.pop();
 
-            for (xs, elems) |*o, elem| {
+            for (xs[1..], elems[1..]) |*o, elem| {
                 m.push(elem);
                 if (!m.call(f)) return;
                 o.* = m.pop();
