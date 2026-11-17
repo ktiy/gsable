@@ -1,9 +1,3 @@
-const App = @This();
-
-const fps = 60;
-const screen_width = 640;
-const screen_height = 480;
-
 io: std.Io,
 gpa: std.mem.Allocator,
 arena: std.heap.ArenaAllocator,
@@ -18,6 +12,15 @@ fps_cap: sdl.extras.FramerateCapper(f32),
 font: sdl.ttf.Font,
 
 quit: bool,
+
+const fps = 60;
+const screen_width = 640;
+const screen_height = 480;
+
+const col = struct {
+    pub const white: Colour = .{ .r = 255, .g = 255, .b = 255, .a = 255 };
+    pub const black: Colour = .{ .r = 0, .g = 0, .b = 0, .a = 255 };
+};
 
 pub fn init(
     self: *App,
@@ -74,22 +77,28 @@ pub fn frame(self: *App) !bool {
     const dt = self.fps_cap.delay();
     _ = dt;
 
-    try self.renderer.setDrawColor(.{ .r = 255, .g = 255, .b = 255, .a = 255 });
+    try self.renderer.setDrawColor(col.white.toSdl());
     try self.renderer.renderFillRect(null);
 
-    const text_surf = try self.font.renderTextBlended("sable", .{ .r = 0, .g = 0, .b = 0, .a = 255 });
-    defer text_surf.deinit();
-
-    const text_text = try self.renderer.createTextureFromSurface(text_surf);
-    defer text_text.deinit();
-
-    try self.renderer.renderTexture(text_text, null, null);
+    try self.draw_text("sable", 16, 16);
 
     return true;
 }
 
 pub fn frame_end(self: *App) !void {
     try self.renderer.present();
+}
+
+pub fn draw_text(self: *App, str: []const u8, x: f32, y: f32) !void {
+    const surf = try self.font.renderTextBlended(str, col.black);
+    defer surf.deinit();
+
+    const tex = try self.renderer.createTextureFromSurface(surf);
+    defer tex.deinit();
+
+    const w, const h = try tex.getSize();
+    const dst: sdl.rect.FRect = .{ .x = x, .y = y, .w = w, .h = h };
+    try self.renderer.renderTexture(tex, null, dst);
 }
 
 fn set_app_icon(self: *App) !void {
@@ -118,6 +127,9 @@ fn get_dir_path(self: *App, dir: folders.KnownFolder, path: []const u8) ![:0]con
     return full;
 }
 
+const Colour = sdl.ttf.Color;
+
+const App = @This();
 const folders = @import("known_folders");
 const sdl = @import("sdl3");
 const std = @import("std");
