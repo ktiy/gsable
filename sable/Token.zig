@@ -18,6 +18,8 @@ pub const Kind = enum(u8) {
     array_close,
     brace_open,
     brace_close,
+    paren_open,
+    paren_close,
     left_arrow,
     semicolon,
     strand,
@@ -61,7 +63,6 @@ pub const Kind = enum(u8) {
     each,
     scan,
 
-    comment,
     comment_line,
     newline,
 
@@ -104,7 +105,6 @@ pub const Lexer = struct {
             newline,
             char_start,
             comment_line,
-            comment_paren,
             symbol,
             number_dec,
             number_hex,
@@ -114,8 +114,6 @@ pub const Lexer = struct {
             string_start,
             string_backslash,
         };
-
-        var comment_depth: usize = 0;
 
         state: switch (State.start) {
             .start => switch (try lex.peek()) {
@@ -141,11 +139,6 @@ pub const Lexer = struct {
                     lex.incr();
                     t.kind = .comment_line;
                     continue :state .comment_line;
-                },
-                '(' => {
-                    lex.incr();
-                    t.kind = .comment;
-                    continue :state .comment_paren;
                 },
                 'a'...'z', 'A'...'Z', '_' => {
                     lex.incr();
@@ -206,6 +199,8 @@ pub const Lexer = struct {
                 ']' => t.kind = lex.atom(.array_close),
                 '{' => t.kind = lex.atom(.brace_open),
                 '}' => t.kind = lex.atom(.brace_close),
+                '(' => t.kind = lex.atom(.paren_open),
+                ')' => t.kind = lex.atom(.paren_close),
                 '‿' => t.kind = lex.atom(.strand),
                 '¬' => t.kind = lex.atom(.not),
                 '=' => t.kind = lex.atom(.eq),
@@ -243,27 +238,6 @@ pub const Lexer = struct {
                 else => {
                     lex.incr();
                     continue :state .comment_line;
-                },
-            },
-            .comment_paren => switch (try lex.peek()) {
-                0 => {
-                    return Error.unclosed_comment;
-                },
-                '(' => {
-                    lex.incr();
-                    comment_depth += 1;
-                    continue :state .comment_paren;
-                },
-                ')' => {
-                    lex.incr();
-                    if (comment_depth > 0) {
-                        comment_depth -= 1;
-                        continue :state .comment_paren;
-                    }
-                },
-                else => {
-                    lex.incr();
-                    continue :state .comment_paren;
                 },
             },
             .symbol => switch (try lex.peek()) {
@@ -402,7 +376,7 @@ test "lexer" {
 
     const src =
         \\1‿2ι3+ %comment
-        \\[3](comment(nested))0-
+        \\[3](1(2))0-
         \\"hello\n"
     ;
 
@@ -417,7 +391,12 @@ test "lexer" {
         .array_open,
         .real,
         .array_close,
-        .comment,
+        .paren_open,
+        .real,
+        .paren_open,
+        .real,
+        .paren_close,
+        .paren_close,
         .real,
         .sub,
         .newline,
@@ -440,14 +419,6 @@ test "lexer invalid character" {
     var lex = Lexer.init("a↢", 0);
     const result = lex.collect(gpa);
     try std.testing.expectError(error.unexpected_character, result);
-    try std.testing.expectEqual(1, lex.pos);
-}
-
-test "lexer unclosed comment" {
-    const gpa = std.testing.allocator;
-    var lex = Lexer.init("(", 0);
-    const result = lex.collect(gpa);
-    try std.testing.expectError(error.unclosed_comment, result);
     try std.testing.expectEqual(1, lex.pos);
 }
 

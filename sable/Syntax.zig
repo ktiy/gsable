@@ -224,10 +224,28 @@ const Parser = struct {
 
     fn parse_operand(p: *Parser) Error!?Node {
         return switch (p.kind()) {
+            .paren_open => p.parse_paren(),
             .brace_open => p.parse_block(),
             .array_open => p.parse_array(),
             else => p.parse_atom(),
         };
+    }
+
+    fn parse_paren(p: *Parser) Error!?Node {
+        const open = p.incr();
+        const inner = try p.parse_train();
+
+        const extra_start: u32 = @intCast(p.extra.items.len);
+        if (inner) |n| try p.extra.append(p.gpa, try p.push(n));
+        const extra_end: u32 = @intCast(p.extra.items.len);
+
+        if (p.kind() != .paren_close) {
+            try p.push_err(.expected_paren_close, p.pos);
+            return .node(.sequence, open, p.pos, extra_start, extra_end);
+        }
+
+        const close = p.incr();
+        return .node(.sequence, open, close, extra_start, extra_end);
     }
 
     fn parse_block(p: *Parser) Error!?Node {
@@ -296,7 +314,6 @@ const Parser = struct {
     fn skip_trivia(p: *Parser) void {
         while (p.pos < p.tokens.len) : (p.pos += 1) {
             switch (p.tokens.items(.kind)[p.pos]) {
-                .comment => {},
                 else => return,
             }
         }
@@ -313,7 +330,6 @@ const Parser = struct {
         var seen: u32 = 0;
         while (i < p.tokens.len) : (i += 1) {
             switch (p.tokens.items(.kind)[i]) {
-                .comment => continue,
                 else => {
                     if (seen == offset) return p.tokens.items(.kind)[i];
                     seen += 1;
