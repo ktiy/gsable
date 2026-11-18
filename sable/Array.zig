@@ -53,6 +53,9 @@ pub fn init(
     const ptr: Array = .{ .header = h };
     switch (kind) {
         .any => @memset(ptr.any_slice(), .num(0)),
+        .num => @memset(ptr.num_slice(), 0),
+        .byte => @memset(ptr.byte_slice(), 0),
+        .char => @memset(ptr.char_slice(), 0),
     }
 
     return ptr;
@@ -70,18 +73,22 @@ pub fn deinit(self: Array, gpa: std.mem.Allocator) void {
 
 /// copy on write if `ref_count` > 1
 pub fn prepare_write(self: Array, gpa: std.mem.Allocator) !Array {
-    if (self.header.refc == 1) return self;
+    if (self.refc() == 1) return self;
 
-    const kind = self.header.kind;
+    const kind = self.ty();
     const clone = try Array.init(gpa, self.shape(), kind);
-
     switch (kind) {
         .any => {
             @memcpy(clone.any_slice(), self.any_slice());
             for (clone.any_slice()) |elem| {
-                if (elem.is_array()) elem.into(.array).retain();
+                if (elem.is_array()) {
+                    elem.into(.array).retain();
+                }
             }
         },
+        .num => @memcpy(clone.num_slice(), self.num_slice()),
+        .byte => @memcpy(clone.byte_slice(), self.byte_slice()),
+        .char => @memcpy(clone.char_slice(), self.char_slice()),
     }
 
     self.release(gpa);
@@ -142,6 +149,18 @@ pub fn any_slice(self: Array) []Cell {
     return self.header.payload().data(Cell);
 }
 
+pub fn num_slice(self: Array) []f64 {
+    return self.header.payload().data(f64);
+}
+
+pub fn byte_slice(self: Array) []u8 {
+    return self.header.payload().data(u8);
+}
+
+pub fn char_slice(self: Array) []u32 {
+    return self.header.payload().data(u32);
+}
+
 pub fn is_any(self: Array) bool {
     return self.header.kind == .any;
 }
@@ -179,25 +198,34 @@ pub fn shape(self: Array) []i64 {
 
 pub fn get(self: Array, i: usize) Cell {
     switch (self.header.kind) {
-        .any => {
-            const xs = self.any_slice();
-            return xs[i];
-        },
+        .any => return self.any_slice()[i],
+        .num => return .num(self.num_slice()[i]),
+        .byte => return .byte(self.byte_slice()[i]),
+        .char => return .char(self.char_slice()[i]),
     }
 }
 
 pub const Kind = enum(u8) {
     any,
+    num,
+    byte,
+    char,
 
-    pub fn Type(comptime self: Kind) Type {
+    pub fn Type(comptime self: Kind) type {
         return switch (self) {
             .any => Cell,
+            .num => f64,
+            .byte => u8,
+            .char => u32,
         };
     }
 
     pub fn array_size(self: Kind, len: u64) usize {
         return switch (self) {
             .any => len * @sizeOf(Cell),
+            .num => len * @sizeOf(f64),
+            .byte => len * @sizeOf(u8),
+            .char => len * @sizeOf(u32),
         };
     }
 };

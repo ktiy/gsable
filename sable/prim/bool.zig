@@ -1,4 +1,4 @@
-const prim = @import("pervasive.zig").prim2;
+const prim = @import("pervasive.zig").cmp;
 
 pub const eq = prim(Eq);
 pub const neq = prim(Neq);

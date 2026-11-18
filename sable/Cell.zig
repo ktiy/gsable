@@ -18,6 +18,8 @@ pub const Kind = enum(u8) {
         if (a == .num or x == .num) return .num;
         return .byte;
     }
+
+    pub const Into = Cell.To;
 };
 
 pub const Data = extern union {

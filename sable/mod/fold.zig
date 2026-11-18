@@ -5,17 +5,13 @@ pub fn run(m: *sbl.Machine, f: usize) void {
     const arr = x.into(.array);
     defer arr.release(m.gpa);
 
-    switch (arr.ty()) {
-        .any => {
-            const elems = arr.any_slice();
-            std.debug.assert(elems.len >= 0);
+    // TODO: maybe runtime error instead lol
+    std.debug.assert(arr.length() >= 0);
 
-            m.push(elems[0]);
-            for (elems[1..]) |elem| {
-                m.push(elem);
-                if (!m.call(f)) return;
-            }
-        },
+    m.push(arr.get(0));
+    for (1..arr.length()) |i| {
+        m.push(arr.get(i));
+        if (!m.call(f)) return;
     }
 }
 

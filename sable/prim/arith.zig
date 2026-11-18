@@ -1,4 +1,4 @@
-const prim = @import("pervasive.zig").prim2;
+const prim = @import("pervasive.zig").arith;
 
 pub const add = prim(Add);
 pub const sub = prim(Sub);
