@@ -12,12 +12,7 @@ pub fn next(self: *ArrayIterator) ?sbl.Cell {
     if (self.pos >= self.ptr.header.len) return null;
     defer self.pos += 1;
 
-    if (self.ptr.is_any()) {
-        const x = self.ptr.any_slice()[self.pos];
-        return x;
-    }
-
-    unreachable;
+    return self.ptr.get(self.pos);
 }
 
 const ArrayIterator = @This();

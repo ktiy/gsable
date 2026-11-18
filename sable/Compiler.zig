@@ -276,17 +276,15 @@ fn node_to_cell(w: *Compiler, comptime k: Node.Kind, n: Node.Index) E!?Cell {
                 };
             }
 
-            //TODO: array downcast
-            return Cell.array(arr);
+            return Cell.array(try arr.downcast(w.gpa));
         },
         .string => {
             const s = w.str(t);
             const inner = s[1 .. s.len - 1];
 
             const sh = [_]sbl.Array.Dim{@intCast(inner.len)};
-            // TODO: u32 array
-            var arr = try sbl.Array.init(w.gpa, &sh, .any);
-            const cells = arr.any_slice();
+            var arr = try sbl.Array.init(w.gpa, &sh, .char);
+            const cells = arr.char_slice();
 
             var count = @as(usize, 0);
             var i = @as(usize, 0);
@@ -295,7 +293,7 @@ fn node_to_cell(w: *Compiler, comptime k: Node.Kind, n: Node.Index) E!?Cell {
                     arr.release(w.gpa);
                     return w.invalid(t);
                 };
-                cells[count] = Cell.char(ch);
+                cells[count] = ch;
                 i += incr;
             }
 

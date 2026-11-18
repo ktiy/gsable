@@ -95,6 +95,39 @@ pub fn prepare_write(self: Array, gpa: std.mem.Allocator) !Array {
     return clone;
 }
 
+pub fn downcast(self: Array, gpa: std.mem.Allocator) !Array {
+    if (!self.is_any()) return self;
+
+    const cells = self.any_slice();
+    if (cells.len == 0) return self;
+
+    const k = cells[0].k;
+    for (cells) |c| if (c.k != k) return self;
+
+    const out_k: Array.Kind = switch (k) {
+        .num => .num,
+        .byte => .byte,
+        .char => .char,
+        else => unreachable,
+    };
+    const out = try Array.init(gpa, self.shape(), out_k);
+    switch (k) {
+        .num => for (out.num_slice(), cells) |*elem, x| {
+            elem.* = x.into(.num);
+        },
+        .byte => for (out.byte_slice(), cells) |*elem, x| {
+            elem.* = x.into(.byte);
+        },
+        .char => for (out.char_slice(), cells) |*elem, x| {
+            elem.* = x.into(.char);
+        },
+        else => unreachable,
+    }
+
+    self.release(gpa);
+    return out;
+}
+
 pub fn shrink(self: Array, gpa: std.mem.Allocator, len: usize) !Array {
     const h = self.header;
     assert(h.rank == 1);
