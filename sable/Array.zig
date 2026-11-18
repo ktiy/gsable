@@ -79,7 +79,7 @@ pub fn prepare_write(self: Array, gpa: std.mem.Allocator) !Array {
         .any => {
             @memcpy(clone.any_slice(), self.any_slice());
             for (clone.any_slice()) |elem| {
-                if (elem.k == .array) elem.into(.array).retain();
+                if (elem.is_array()) elem.into(.array).retain();
             }
         },
     }
@@ -175,6 +175,15 @@ pub fn length(self: Array) u64 {
 
 pub fn shape(self: Array) []i64 {
     return self.payload().shape();
+}
+
+pub fn get(self: Array, i: usize) Cell {
+    switch (self.header.kind) {
+        .any => {
+            const xs = self.any_slice();
+            return xs[i];
+        },
+    }
 }
 
 pub const Kind = enum(u8) {

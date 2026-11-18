@@ -16,7 +16,7 @@ fn run_e(m: *sbl.Machine) !void {
     const x = m.pop();
     const a = m.top();
 
-    if (x.k == .none) {
+    if (x.empty()) {
         if (!a.atom()) a.into(.array).release(m.gpa);
         a.* = x;
         return;
@@ -40,12 +40,9 @@ fn run_e(m: *sbl.Machine) !void {
 
             // TODO: array slice views without copying?
             var res = try sbl.Array.init(m.gpa, sh[1..], .any);
-            var ai = as.iter();
-            ai.pos = start_idx;
 
-            for (res.any_slice()) |*elem| {
-                const v = ai.next() orelse unreachable;
-                elem.* = v;
+            for (res.any_slice(), 0..) |*elem, i| {
+                elem.* = as.get(start_idx + i);
             }
 
             _ = end_idx;
@@ -56,10 +53,10 @@ fn run_e(m: *sbl.Machine) !void {
             return;
         }
 
-        var ai = as.iter();
-        ai.pos = x.coerce(.char);
+        const i = x.coerce(.char);
+        if (i >= as.length()) return m.throw(.bounds);
 
-        a.* = ai.next() orelse return m.throw(.bounds);
+        a.* = as.get(i);
         as.release(m.gpa);
 
         return;

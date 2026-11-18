@@ -4,7 +4,7 @@ const sbl = @import("sbl");
 pub fn run(m: *sbl.Machine) void {
     const x = m.pop();
 
-    if (x.k == .none) {
+    if (x.empty()) {
         m.push(.num(0));
         return;
     }

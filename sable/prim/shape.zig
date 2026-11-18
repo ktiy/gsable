@@ -28,11 +28,8 @@ pub fn re(m: *sbl.Machine) void {
     const x = m.pop();
     const a = m.pop();
 
-    if (a.k == .none) {
-        m.push(a);
-        return;
-    }
-    if (x.k == .none) return m.throw(.rank);
+    if (a.empty()) return m.push(a);
+    if (x.empty()) return m.throw(.rank);
 
     if (x.atom()) {
         const u = x.coerce(.char);
@@ -57,10 +54,9 @@ pub fn re(m: *sbl.Machine) void {
     var auto: ?usize = null;
     var known: usize = 1;
 
-    var iter = xs.iter();
     for (sh, 0..) |*dim, i| {
-        const elem = iter.next().?;
-        if (elem.k == .none) {
+        const elem = xs.get(i);
+        if (elem.empty()) {
             if (auto) |_| return m.throw(.rank);
             auto = i;
             dim.* = 0;
@@ -99,7 +95,5 @@ fn get_wrap(x: sbl.Cell, i: usize) sbl.Cell {
     const arr = x.into(.array);
     const idx = i % arr.header.len;
 
-    var iter = arr.iter();
-    iter.pos = idx;
-    return iter.next().?;
+    return arr.get(idx);
 }

@@ -34,11 +34,19 @@ pub fn num(x: f64) Cell {
     };
 }
 
+pub fn is_num(x: Cell) bool {
+    return x.k == .num;
+}
+
 pub fn byte(x: u8) Cell {
     return .{
         .k = .byte,
         .x = .{ .byte = x },
     };
+}
+
+pub fn is_byte(x: Cell) bool {
+    return x.k == .byte;
 }
 
 pub fn char(x: u32) Cell {
@@ -48,11 +56,19 @@ pub fn char(x: u32) Cell {
     };
 }
 
+pub fn is_char(x: Cell) bool {
+    return x.k == .char;
+}
+
 pub fn array(x: Array) Cell {
     return .{
         .k = .array,
         .x = .{ .array = x.header },
     };
+}
+
+pub fn is_array(x: Cell) bool {
+    return x.k == .array;
 }
 
 pub fn none() Cell {
@@ -62,16 +78,16 @@ pub fn none() Cell {
     };
 }
 
+pub fn empty(x: Cell) bool {
+    return x.k == .none;
+}
+
 pub fn promote(a: Cell, x: Cell) Kind {
     return a.k.promote(x.k);
 }
 
 pub fn atom(self: Cell) bool {
     return self.k.atom();
-}
-
-pub fn empty(self: Cell) bool {
-    return self.k == .none;
 }
 
 pub fn To(comptime k: Kind) type {
@@ -92,6 +108,32 @@ pub fn into(self: Cell, comptime k: Kind) To(k) {
         .char => self.x.char,
         .array => Array{ .header = self.x.array },
         .none => {},
+    };
+}
+
+pub fn coerce(self: Cell, comptime k: Kind) To(k) {
+    std.debug.assert(self.atom());
+
+    return switch (k) {
+        .num => switch (self.k) {
+            .num => self.x.num,
+            .byte => @floatFromInt(self.x.byte),
+            .char => @floatFromInt(self.x.char),
+            else => unreachable,
+        },
+        .char => switch (self.k) {
+            .num => @intFromFloat(self.x.num),
+            .byte => @as(u32, self.x.byte),
+            .char => self.x.char,
+            else => unreachable,
+        },
+        .byte => switch (self.k) {
+            .num => @intFromFloat(self.x.num),
+            .byte => self.x.byte,
+            .char => @truncate(self.x.char),
+            else => unreachable,
+        },
+        else => unreachable,
     };
 }
 
@@ -123,32 +165,6 @@ fn compare_num(x: f64, y: f64) std.math.Order {
     if (x_nan) return .gt;
     if (y_nan) return .lt;
     return std.math.order(x, y);
-}
-
-pub fn coerce(self: Cell, comptime k: Kind) To(k) {
-    std.debug.assert(self.atom());
-
-    return switch (k) {
-        .num => switch (self.k) {
-            .num => self.x.num,
-            .byte => @floatFromInt(self.x.byte),
-            .char => @floatFromInt(self.x.char),
-            else => unreachable,
-        },
-        .char => switch (self.k) {
-            .num => @intFromFloat(self.x.num),
-            .byte => @as(u32, self.x.byte),
-            .char => self.x.char,
-            else => unreachable,
-        },
-        .byte => switch (self.k) {
-            .num => @intFromFloat(self.x.num),
-            .byte => self.x.byte,
-            .char => @truncate(self.x.char),
-            else => unreachable,
-        },
-        else => unreachable,
-    };
 }
 
 pub fn format(self: Cell, w: *std.Io.Writer) !void {
@@ -196,7 +212,6 @@ fn fmt_dims(
 }
 
 const Cell = @This();
-
 const std = @import("std");
 const sbl = @import("sbl");
 const builtin = @import("builtin");
