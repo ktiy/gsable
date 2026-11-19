@@ -77,12 +77,12 @@ pub fn keymap(c: u8) ?u21 {
     };
 }
 
-pub fn init(gpa: std.mem.Allocator) !Repl {
+pub fn init(gpa: std.mem.Allocator, io: std.Io) !Repl {
     return .{
         .gpa = gpa,
         .r = Readline{},
         .st = try sbl.SymTable.init(gpa),
-        .m = sbl.Machine.init(gpa, .{
+        .m = sbl.Machine.init(gpa, io, .{
             .bc = &.{},
             .loc = &.{},
             .lambdas = &.{},

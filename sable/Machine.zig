@@ -1,4 +1,5 @@
 gpa: std.mem.Allocator,
+io: std.Io,
 prog: sbl.bc.Program,
 dat: [dat_stack_size]Cell = undefined,
 ret: [ret_stack_size]usize = undefined,
@@ -8,9 +9,10 @@ ret_p: Ret_P = 0,
 e: sbl.RuntimeError = .none,
 mem: std.AutoHashMapUnmanaged(Symbol, Cell) = .empty,
 
-pub fn init(gpa: std.mem.Allocator, p: sbl.bc.Program) Machine {
+pub fn init(gpa: std.mem.Allocator, io: std.Io, p: sbl.bc.Program) Machine {
     return .{
         .gpa = gpa,
+        .io = io,
         .prog = p,
     };
 }

@@ -16,6 +16,7 @@ pub const Kind = enum {
     rank,
     shape,
     type,
+    os,
 };
 
 pub const none = RuntimeError{ .kind = .none };

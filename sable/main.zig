@@ -87,7 +87,7 @@ pub fn main(init: std.process.Init.Minimal) !void {
     }
 
     if (repl) {
-        var x = try Repl.init(gpa);
+        var x = try Repl.init(gpa, io);
         defer x.deinit();
         try x.run();
         std.process.exit(1);
@@ -167,7 +167,7 @@ pub fn main(init: std.process.Init.Minimal) !void {
             try stderr.flush();
         }
 
-        var m = Machine.init(gpa, prog);
+        var m = Machine.init(gpa, io, prog);
         defer m.deinit();
 
         while (m.step()) {}
