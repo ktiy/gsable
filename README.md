@@ -8,7 +8,7 @@ Interpreter and graphical environment for the **sable** programming language. Wo
 
 Ensure the following dependencies are installed on your machine:
 
-- [zig v0.17.0][1]
+- [zig][1] (v0.17.x)
 - [SDL3][2]
 
 Then, build the project from source.
@@ -38,12 +38,7 @@ usage: sbl [options] [input-file...]
 
 ## Documentation
 
-**sable** is a simple concatenative programming language. It is stack-based like [forth][3], with dynamic types and [arrays][4] like [APL][5].
-
-Here is simple example function that finds the mean value of an array:
-```
-avg ← .+´~⧻÷
-```
+**sable** is a concatenative programming language. It is stack-based like [forth][3], with dynamic types and [arrays][4] like [APL][5].
 
 ## Interpreter Limitations
 
@@ -53,12 +48,10 @@ avg ← .+´~⧻÷
 
 ## License
 
-This project is licensed under the AGPLv3 License. For details, see the [LICENSE](LICENSE) file that should have been included with this program. Otherwise, see [AGPLv3][6].
-
+This project is licensed under AGPLv3. For details, see the [LICENSE](LICENSE) file included in this repository.
 
 [1]: https://ziglang.org
 [2]: https://wiki.libsdl.org/SDL3/FrontPage
 [3]: https://en.wikipedia.org/wiki/Forth_(programming_language)
 [4]: https://aplwiki.com/wiki/Array
 [5]: https://en.wikipedia.org/wiki/APL_(nu.org/licenses/agpl-3.0.txtprogramming_language)
-[6]: https://www.gnu.org/licenses/agpl-3.0.txt
