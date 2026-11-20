@@ -2,16 +2,20 @@ pub const Builtin = enum {
     echo,
     print,
     putc,
+    w,
     frc,
     frb,
+    debug_array,
 };
 
 pub const map = std.StaticStringMap(Builtin).initComptime(&.{
     .{ "echo", .echo },
     .{ "print", .print },
     .{ "putc", .putc },
+    .{ "w", .w },
     .{ "frc", .frc },
     .{ "frb", .frb },
+    .{ "debug_array", .debug_array },
 });
 
 pub fn stack_effect(b: Builtin) Stack_Effect {
@@ -19,8 +23,10 @@ pub fn stack_effect(b: Builtin) Stack_Effect {
         .echo => .init(1, 1),
         .print => .init(1, 0),
         .putc => .init(1, 0),
+        .w => .init(1, 0),
         .frc => .init(1, 1),
         .frb => .init(1, 1),
+        .debug_array => .init(1, 1),
     };
 }
 
@@ -29,8 +35,10 @@ pub fn run(m: M, b: Builtin) void {
         .echo => echo(m),
         .print => print(m),
         .putc => putc(m),
+        .w => w(m),
         .frc => frc(m),
         .frb => frb(m),
+        .debug_array => debug_array(m),
     };
 }
 
@@ -43,11 +51,33 @@ fn print(m: M) void {
     const x = m.pop();
     std.debug.print("{f}", .{x});
 }
+
 fn putc(m: M) void {
     const x = m.pop();
     if (x.k != .char) return m.throw(.type);
     const u: u21 = @truncate(x.into(.char));
     std.debug.print("{u}", .{u});
+}
+
+fn w(m: M) void {
+    const x = m.pop();
+    if (x.atom()) return m.throw(.type);
+
+    const arr = x.into(.array);
+    defer arr.release(m.gpa);
+
+    if (arr.ty() != .char) return m.throw(.type);
+
+    const stdout: std.Io.File = .stdout();
+    var stdout_buf: [1024]u8 = undefined;
+    var stdout_writer = stdout.writer(m.io, &stdout_buf);
+    const writer = &stdout_writer.interface;
+    for (arr.char_slice()) |cp| {
+        const c: u21 = @intCast(cp);
+        writer.print("{u}", .{c}) catch return m.throw(.os);
+    }
+
+    writer.flush() catch return m.throw(.os);
 }
 
 fn frc(m: M) void {
@@ -97,6 +127,13 @@ fn frb(m: M) void {
     @memcpy(ret.byte_slice(), fb);
 
     m.push(.array(ret));
+}
+
+fn debug_array(m: M) void {
+    const x = m.top().*;
+    if (x.atom()) return m.throw(.type);
+    const arr = x.into(.array);
+    std.debug.print("type: {s}\nrefc: {d}\n", .{ @tagName(arr.ty()), arr.refc() });
 }
 
 fn file_open_path_u32(m: M, path_u32: []const u32) ![]const u8 {
